@@ -41,8 +41,13 @@ from src.annualization import (
 
 from src.monte_carlo import (
     simulate_portfolios,
-    maximum_sharpe_portfolio,
-    minimum_volatility_portfolio,
+    maximum_sharpe_portfolio as sampled_maximum_sharpe,
+    minimum_volatility_portfolio as sampled_minimum_volatility,
+)
+
+from src.optimization import (
+    maximum_sharpe_portfolio as optimized_maximum_sharpe,
+    minimum_volatility_portfolio as optimized_minimum_volatility,
 )
 
 from src.visualization import (
@@ -53,7 +58,7 @@ from src.visualization import (
 def print_portfolio(
     title,
     portfolio,
-    asset_names,
+    asset_symbols,
 ):
     print(
         f"\n{title}"
@@ -78,87 +83,48 @@ def print_portfolio(
         "Weights:"
     )
 
-    for name, weight in zip(
-        asset_names,
+    for symbol, weight in zip(
+        asset_symbols,
         portfolio["weights"],
     ):
         print(
-            f"  {name}: "
+            f"  {symbol}: "
             f"{weight:.2%}"
         )
 
 
-def main():
-    print(
-        "======================================="
-    )
+def build_returns(
+    symbols,
+    historical_prices,
+):
+    returns_by_symbol = {}
 
-    print(
-        "   Quant Portfolio Modeling Engine"
-    )
-
-    print(
-        "======================================="
-    )
-
-    asset_symbols = [
-        "AAPL",
-        "MSFT",
-        "NVDA",
-        "JPM",
-    ]
-
-    benchmark_symbol = "SPY"
-
-    all_symbols = (
-        asset_symbols
-        + [benchmark_symbol]
-    )
-
-    start_date = datetime(
-        2021,
-        1,
-        1,
-        tzinfo=timezone.utc,
-    )
-
-    print(
-        "\nDownloading historical market data..."
-    )
-
-    historical_prices, dates = (
-        get_historical_close_prices(
-            symbols=all_symbols,
-            start_date=start_date,
+    for symbol in symbols:
+        returns_by_symbol[
+            symbol
+        ] = calculate_simple_returns(
+            historical_prices[
+                symbol
+            ]
         )
-    )
 
-    print(
-        f"Loaded {len(dates):,} "
-        f"aligned trading days."
-    )
+    return returns_by_symbol
 
-    print(
-        f"Historical start: "
-        f"{dates[0].date()}"
-    )
 
-    print(
-        f"Historical end: "
-        f"{dates[-1].date()}"
-    )
-
+def print_latest_prices(
+    symbols,
+):
     print(
         "\n--- Latest Market Prices ---"
     )
 
     latest_prices = (
         get_latest_trade_prices(
-            all_symbols
+            symbols
         )
     )
 
-    for symbol in all_symbols:
+    for symbol in symbols:
         latest = (
             latest_prices[
                 symbol
@@ -170,34 +136,11 @@ def main():
             f"${latest['price']:.2f}"
         )
 
-    print(
-        "\nCalculating returns..."
-    )
 
-    returns_by_symbol = {}
-
-    for symbol in all_symbols:
-        returns_by_symbol[
-            symbol
-        ] = calculate_simple_returns(
-            historical_prices[
-                symbol
-            ]
-        )
-
-    asset_returns = [
-        returns_by_symbol[
-            symbol
-        ]
-        for symbol in asset_symbols
-    ]
-
-    market_returns = (
-        returns_by_symbol[
-            benchmark_symbol
-        ]
-    )
-
+def print_asset_statistics(
+    asset_symbols,
+    returns_by_symbol,
+):
     print(
         "\n--- Historical Asset Statistics ---"
     )
@@ -215,7 +158,7 @@ def main():
             )
         )
 
-        asset_variance = (
+        daily_variance = (
             variance(
                 returns,
                 sample=True,
@@ -279,41 +222,24 @@ def main():
 
         print(
             f"  Daily variance: "
-            f"{asset_variance:.8f}"
+            f"{daily_variance:.8f}"
         )
 
+
+def print_market_analysis(
+    asset_symbols,
+    benchmark_symbol,
+    returns_by_symbol,
+):
     print(
-        "\n--- Correlation Example ---"
+        "\n--- Beta / Regression vs "
+        f"{benchmark_symbol} ---"
     )
 
-    correlation_value = (
-        correlation(
-            returns_by_symbol["AAPL"],
-            returns_by_symbol["MSFT"],
-            sample=True,
-        )
-    )
-
-    covariance_value = (
-        covariance(
-            returns_by_symbol["AAPL"],
-            returns_by_symbol["MSFT"],
-            sample=True,
-        )
-    )
-
-    print(
-        f"AAPL / MSFT covariance: "
-        f"{covariance_value:.8f}"
-    )
-
-    print(
-        f"AAPL / MSFT correlation: "
-        f"{correlation_value:.4f}"
-    )
-
-    print(
-        "\n--- Beta / Regression vs SPY ---"
+    market_returns = (
+        returns_by_symbol[
+            benchmark_symbol
+        ]
     )
 
     for symbol in asset_symbols:
@@ -356,108 +282,223 @@ def main():
             f"{regression_beta:.4f}"
         )
 
-    print(
-        "\n--- Equal-Weight Portfolio ---"
-    )
 
+def calculate_equal_weight_portfolio(
+    asset_returns,
+    annual_risk_free_rate,
+):
     number_of_assets = len(
-        asset_symbols
+        asset_returns
     )
 
-    equal_weights = [
+    weights = [
         1 / number_of_assets
     ] * number_of_assets
 
-    expected_daily_returns = [
-        arithmetic_mean(
-            returns_by_symbol[
-                symbol
-            ]
-        )
-        for symbol in asset_symbols
-    ]
+    expected_daily_returns = []
 
-    daily_portfolio_return = (
+    for returns in asset_returns:
+        expected_daily_returns.append(
+            arithmetic_mean(
+                returns
+            )
+        )
+
+    daily_return = (
         portfolio_expected_return(
-            equal_weights,
+            weights,
             expected_daily_returns,
         )
     )
 
-    daily_portfolio_variance = (
+    daily_variance = (
         multi_asset_portfolio_variance(
-            equal_weights,
+            weights,
             asset_returns,
             sample=True,
         )
     )
 
-    daily_portfolio_volatility = (
+    daily_volatility = (
         portfolio_volatility(
-            daily_portfolio_variance
+            daily_variance
         )
     )
 
-    annual_portfolio_return = (
+    annual_return = (
         annualized_arithmetic_return(
-            daily_portfolio_return
+            daily_return
         )
     )
 
-    annual_portfolio_volatility = (
+    annual_volatility_value = (
         annualized_volatility(
-            daily_portfolio_volatility
+            daily_volatility
         )
+    )
+
+    portfolio_sharpe = (
+        sharpe_ratio(
+            annual_return,
+            annual_risk_free_rate,
+            annual_volatility_value,
+        )
+    )
+
+    return {
+        "weights": weights,
+        "annual_return": annual_return,
+        "annual_volatility": annual_volatility_value,
+        "sharpe_ratio": portfolio_sharpe,
+    }
+
+
+def main():
+    print(
+        "======================================="
+    )
+
+    print(
+        "   Quant Portfolio Modeling Engine"
+    )
+
+    print(
+        "======================================="
+    )
+
+    asset_symbols = [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "JPM",
+    ]
+
+    benchmark_symbol = "SPY"
+
+    all_symbols = (
+        asset_symbols
+        + [benchmark_symbol]
     )
 
     annual_risk_free_rate = 0.04
 
-    equal_weight_sharpe = (
-        sharpe_ratio(
-            annual_portfolio_return,
-            annual_risk_free_rate,
-            annual_portfolio_volatility,
+    start_date = datetime(
+        2021,
+        1,
+        1,
+        tzinfo=timezone.utc,
+    )
+
+    print(
+        "\nDownloading historical market data..."
+    )
+
+    historical_prices, dates = (
+        get_historical_close_prices(
+            symbols=all_symbols,
+            start_date=start_date,
         )
     )
 
     print(
-        f"Annual expected return: "
-        f"{annual_portfolio_return:.2%}"
+        f"Loaded {len(dates):,} "
+        f"aligned trading days."
     )
 
     print(
-        f"Annual volatility: "
-        f"{annual_portfolio_volatility:.2%}"
+        f"Historical start: "
+        f"{dates[0].date()}"
     )
 
     print(
-        f"Sharpe ratio: "
-        f"{equal_weight_sharpe:.4f}"
+        f"Historical end: "
+        f"{dates[-1].date()}"
+    )
+
+    print_latest_prices(
+        all_symbols
     )
 
     print(
-        "\nWeights:"
+        "\nCalculating returns..."
     )
 
-    for symbol, weight in zip(
+    returns_by_symbol = (
+        build_returns(
+            all_symbols,
+            historical_prices,
+        )
+    )
+
+    asset_returns = [
+        returns_by_symbol[
+            symbol
+        ]
+        for symbol in asset_symbols
+    ]
+
+    print_asset_statistics(
         asset_symbols,
-        equal_weights,
-    ):
-        print(
-            f"  {symbol}: "
-            f"{weight:.2%}"
+        returns_by_symbol,
+    )
+
+    print(
+        "\n--- Correlation Example ---"
+    )
+
+    correlation_value = (
+        correlation(
+            returns_by_symbol["AAPL"],
+            returns_by_symbol["MSFT"],
+            sample=True,
         )
+    )
+
+    covariance_value = (
+        covariance(
+            returns_by_symbol["AAPL"],
+            returns_by_symbol["MSFT"],
+            sample=True,
+        )
+    )
+
+    print(
+        f"AAPL / MSFT covariance: "
+        f"{covariance_value:.8f}"
+    )
+
+    print(
+        f"AAPL / MSFT correlation: "
+        f"{correlation_value:.4f}"
+    )
+
+    print_market_analysis(
+        asset_symbols,
+        benchmark_symbol,
+        returns_by_symbol,
+    )
+
+    equal_weight_portfolio = (
+        calculate_equal_weight_portfolio(
+            asset_returns,
+            annual_risk_free_rate,
+        )
+    )
+
+    print_portfolio(
+        "Equal-Weight Portfolio",
+        equal_weight_portfolio,
+        asset_symbols,
+    )
 
     print(
         "\n--- Monte Carlo Simulation ---"
     )
 
-    number_of_portfolios = 10000
-
     simulation_results = (
         simulate_portfolios(
             asset_returns=asset_returns,
-            number_of_portfolios=number_of_portfolios,
+            number_of_portfolios=10000,
             annual_risk_free_rate=annual_risk_free_rate,
             periods_per_year=252,
             sample=True,
@@ -471,38 +512,106 @@ def main():
         f"portfolios."
     )
 
-    max_sharpe = (
-        maximum_sharpe_portfolio(
+    monte_carlo_max_sharpe = (
+        sampled_maximum_sharpe(
             simulation_results
         )
     )
 
-    min_volatility = (
-        minimum_volatility_portfolio(
+    monte_carlo_min_volatility = (
+        sampled_minimum_volatility(
             simulation_results
         )
     )
 
     print_portfolio(
-        "Highest-Sharpe Sampled Portfolio",
-        max_sharpe,
+        "Monte Carlo Highest-Sharpe Portfolio",
+        monte_carlo_max_sharpe,
         asset_symbols,
     )
 
     print_portfolio(
-        "Lowest-Volatility Sampled Portfolio",
-        min_volatility,
+        "Monte Carlo Lowest-Volatility Portfolio",
+        monte_carlo_min_volatility,
         asset_symbols,
+    )
+
+    print(
+        "\n--- Mathematical Optimization ---"
+    )
+
+    true_max_sharpe = (
+        optimized_maximum_sharpe(
+            asset_returns,
+            annual_risk_free_rate=annual_risk_free_rate,
+            periods_per_year=252,
+            sample=True,
+        )
+    )
+
+    true_min_volatility = (
+        optimized_minimum_volatility(
+            asset_returns,
+            annual_risk_free_rate=annual_risk_free_rate,
+            periods_per_year=252,
+            sample=True,
+        )
+    )
+
+    print_portfolio(
+        "Optimized Maximum-Sharpe Portfolio",
+        true_max_sharpe,
+        asset_symbols,
+    )
+
+    print_portfolio(
+        "Optimized Minimum-Volatility Portfolio",
+        true_min_volatility,
+        asset_symbols,
+    )
+
+    print(
+        "\n--- Monte Carlo vs Optimization ---"
+    )
+
+    print(
+        "Maximum Sharpe:"
+    )
+
+    print(
+        f"  Monte Carlo: "
+        f"{monte_carlo_max_sharpe['sharpe_ratio']:.6f}"
+    )
+
+    print(
+        f"  Optimized:   "
+        f"{true_max_sharpe['sharpe_ratio']:.6f}"
+    )
+
+    print(
+        "\nMinimum volatility:"
+    )
+
+    print(
+        f"  Monte Carlo: "
+        f"{monte_carlo_min_volatility['annual_volatility']:.6%}"
+    )
+
+    print(
+        f"  Optimized:   "
+        f"{true_min_volatility['annual_volatility']:.6%}"
     )
 
     plot_path = (
         plot_monte_carlo_portfolios(
-            simulation_results
+            simulation_results,
+            optimized_max_sharpe=true_max_sharpe,
+            optimized_min_volatility=true_min_volatility,
         )
     )
 
     print(
-        "\nMonte Carlo plot saved to:"
+        "\nPortfolio plot saved to:"
     )
 
     print(

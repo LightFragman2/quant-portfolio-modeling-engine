@@ -5,3 +5,4 @@ ipykernel
 pytest
 alpaca-py
 python-dotenv
+scipy
