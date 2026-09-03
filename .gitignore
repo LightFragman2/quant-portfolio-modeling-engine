@@ -23,8 +23,11 @@ htmlcov/
 .env
 .env.*
 
-# Allow the safe example environment file
+# Allow safe environment template
 !.env.example
+
+# Streamlit secrets
+.streamlit/secrets.toml
 
 # Operating system files
 .DS_Store

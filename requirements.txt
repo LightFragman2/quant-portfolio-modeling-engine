@@ -6,3 +6,5 @@ pytest
 alpaca-py
 python-dotenv
 scipy
+streamlit
+altair

@@ -15,7 +15,30 @@ from src.annualization import (
 )
 
 
-def normalize_weights(raw_weights):
+def validate_max_weight(
+    number_of_assets,
+    max_weight,
+):
+    if max_weight <= 0 or max_weight > 1:
+        raise ValueError(
+            "Maximum weight must be greater than 0 "
+            "and no greater than 1."
+        )
+
+    if (
+        number_of_assets
+        * max_weight
+        < 1 - 1e-12
+    ):
+        raise ValueError(
+            "Maximum weight is too restrictive "
+            "for the number of assets."
+        )
+
+
+def normalize_weights(
+    raw_weights,
+):
     if len(raw_weights) == 0:
         raise ValueError(
             "At least one weight is required."
@@ -27,44 +50,153 @@ def normalize_weights(raw_weights):
                 "Raw weights cannot be negative."
             )
 
-    total = sum(raw_weights)
+    total = sum(
+        raw_weights
+    )
 
     if total == 0:
         raise ValueError(
             "Raw weights cannot all be zero."
         )
 
-    normalized_weights = []
+    return [
+        weight / total
+        for weight in raw_weights
+    ]
 
-    for weight in raw_weights:
-        normalized_weights.append(
-            weight / total
+
+def construct_capped_weights(
+    number_of_assets,
+    random_generator,
+    max_weight,
+):
+    asset_indices = list(
+        range(
+            number_of_assets
+        )
+    )
+
+    random_generator.shuffle(
+        asset_indices
+    )
+
+    weights = [
+        0.0
+    ] * number_of_assets
+
+    remaining_weight = 1.0
+
+    for position, asset_index in enumerate(
+        asset_indices[:-1]
+    ):
+        assets_remaining = (
+            number_of_assets
+            - position
+            - 1
         )
 
-    return normalized_weights
+        minimum_allowed = max(
+            0.0,
+            remaining_weight
+            - assets_remaining
+            * max_weight,
+        )
+
+        maximum_allowed = min(
+            max_weight,
+            remaining_weight,
+        )
+
+        weight = (
+            random_generator.uniform(
+                minimum_allowed,
+                maximum_allowed,
+            )
+        )
+
+        weights[
+            asset_index
+        ] = weight
+
+        remaining_weight -= (
+            weight
+        )
+
+    weights[
+        asset_indices[-1]
+    ] = remaining_weight
+
+    return weights
 
 
 def generate_random_weights(
     number_of_assets,
     random_generator,
+    max_weight=1.0,
 ):
     if number_of_assets <= 0:
         raise ValueError(
             "Number of assets must be positive."
         )
 
-    while True:
-        raw_weights = []
+    validate_max_weight(
+        number_of_assets,
+        max_weight,
+    )
 
-        for _ in range(number_of_assets):
-            raw_weights.append(
-                random_generator.random()
+    equal_weight = (
+        1
+        / number_of_assets
+    )
+
+    if abs(
+        max_weight
+        - equal_weight
+    ) < 1e-12:
+        return [
+            equal_weight
+        ] * number_of_assets
+
+    # Exponential random variables normalized to
+    # sum to 1 generate a uniform sample from the
+    # long-only portfolio simplex.
+    #
+    # If a maximum-weight constraint exists,
+    # rejection sampling keeps only valid portfolios.
+    for _ in range(
+        5000
+    ):
+        raw_weights = [
+            random_generator.expovariate(
+                1.0
             )
+            for _ in range(
+                number_of_assets
+            )
+        ]
 
-        if sum(raw_weights) > 0:
-            return normalize_weights(
+        weights = (
+            normalize_weights(
                 raw_weights
             )
+        )
+
+        if (
+            max(
+                weights
+            )
+            <= max_weight + 1e-12
+        ):
+            return weights
+
+    # Extremely tight constraints can make rejection
+    # sampling inefficient, so use a guaranteed-valid
+    # construction as a fallback.
+    return construct_capped_weights(
+        number_of_assets,
+        random_generator,
+        max_weight,
+    )
 
 
 def simulate_portfolios(
@@ -74,6 +206,7 @@ def simulate_portfolios(
     periods_per_year=252,
     sample=False,
     seed=42,
+    max_weight=1.0,
 ):
     if len(asset_returns) == 0:
         raise ValueError(
@@ -84,6 +217,15 @@ def simulate_portfolios(
         raise ValueError(
             "Number of portfolios must be positive."
         )
+
+    number_of_assets = len(
+        asset_returns
+    )
+
+    validate_max_weight(
+        number_of_assets,
+        max_weight,
+    )
 
     number_of_observations = len(
         asset_returns[0]
@@ -105,17 +247,28 @@ def simulate_portfolios(
 
     for returns in asset_returns:
         expected_returns.append(
-            arithmetic_mean(returns)
+            arithmetic_mean(
+                returns
+            )
         )
 
-    random_generator = random.Random(seed)
+    random_generator = (
+        random.Random(
+            seed
+        )
+    )
 
     simulation_results = []
 
-    for _ in range(number_of_portfolios):
-        weights = generate_random_weights(
-            number_of_assets=len(asset_returns),
-            random_generator=random_generator,
+    for _ in range(
+        number_of_portfolios
+    ):
+        weights = (
+            generate_random_weights(
+                number_of_assets,
+                random_generator,
+                max_weight=max_weight,
+            )
         )
 
         period_portfolio_return = (
@@ -146,25 +299,33 @@ def simulate_portfolios(
             )
         )
 
-        annual_volatility = (
+        annual_volatility_value = (
             annualized_volatility(
                 period_portfolio_volatility,
                 periods_per_year,
             )
         )
 
-        portfolio_sharpe = sharpe_ratio(
-            annual_return,
-            annual_risk_free_rate,
-            annual_volatility,
+        portfolio_sharpe = (
+            sharpe_ratio(
+                annual_return,
+                annual_risk_free_rate,
+                annual_volatility_value,
+            )
         )
 
         simulation_results.append(
             {
                 "weights": weights,
-                "annual_return": annual_return,
-                "annual_volatility": annual_volatility,
-                "sharpe_ratio": portfolio_sharpe,
+                "annual_return": (
+                    annual_return
+                ),
+                "annual_volatility": (
+                    annual_volatility_value
+                ),
+                "sharpe_ratio": (
+                    portfolio_sharpe
+                ),
             }
         )
 
@@ -181,7 +342,9 @@ def maximum_sharpe_portfolio(
 
     return max(
         simulation_results,
-        key=lambda portfolio: portfolio["sharpe_ratio"],
+        key=lambda portfolio: portfolio[
+            "sharpe_ratio"
+        ],
     )
 
 

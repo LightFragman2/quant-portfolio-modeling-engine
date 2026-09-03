@@ -38,6 +38,28 @@ def validate_asset_returns(asset_returns):
             )
 
 
+def validate_max_weight(
+    number_of_assets,
+    max_weight,
+):
+    if max_weight <= 0 or max_weight > 1:
+        raise ValueError(
+            "Maximum weight must be greater than 0 "
+            "and no greater than 1."
+        )
+
+    if (
+        number_of_assets
+        * max_weight
+        < 1 - 1e-12
+    ):
+        raise ValueError(
+            "Maximum weight is too restrictive. "
+            "The portfolio cannot reach weights "
+            "that sum to 1."
+        )
+
+
 def calculate_expected_period_returns(
     asset_returns,
 ):
@@ -119,31 +141,41 @@ def portfolio_metrics(
             for weight in weights
         ],
         "annual_return": annual_return,
-        "annual_volatility": annual_volatility_value,
+        "annual_volatility": (
+            annual_volatility_value
+        ),
         "sharpe_ratio": portfolio_sharpe,
     }
 
 
-def normalize_optimized_weights(
+def clean_optimized_weights(
     weights,
+    max_weight=1.0,
 ):
-    cleaned_weights = []
+    cleaned = []
 
     for weight in weights:
-        cleaned_weight = max(
+        value = float(
+            weight
+        )
+
+        if abs(value) < 1e-12:
+            value = 0.0
+
+        value = max(
             0.0,
             min(
-                1.0,
-                float(weight),
+                max_weight,
+                value,
             ),
         )
 
-        cleaned_weights.append(
-            cleaned_weight
+        cleaned.append(
+            value
         )
 
     total = sum(
-        cleaned_weights
+        cleaned
     )
 
     if total == 0:
@@ -151,9 +183,41 @@ def normalize_optimized_weights(
             "Optimized weights cannot all be zero."
         )
 
-    return [
+    normalized = [
         weight / total
-        for weight in cleaned_weights
+        for weight in cleaned
+    ]
+
+    for weight in normalized:
+        if (
+            weight
+            > max_weight + 1e-6
+        ):
+            raise RuntimeError(
+                "Optimizer returned a weight above "
+                "the maximum-weight constraint."
+            )
+
+    return normalized
+
+
+def create_bounds(
+    number_of_assets,
+    max_weight,
+):
+    validate_max_weight(
+        number_of_assets,
+        max_weight,
+    )
+
+    return [
+        (
+            0.0,
+            max_weight,
+        )
+        for _ in range(
+            number_of_assets
+        )
     ]
 
 
@@ -162,6 +226,7 @@ def minimum_volatility_portfolio(
     annual_risk_free_rate=0.04,
     periods_per_year=252,
     sample=True,
+    max_weight=1.0,
 ):
     validate_asset_returns(
         asset_returns
@@ -171,16 +236,14 @@ def minimum_volatility_portfolio(
         asset_returns
     )
 
+    bounds = create_bounds(
+        number_of_assets,
+        max_weight,
+    )
+
     initial_weights = [
         1 / number_of_assets
     ] * number_of_assets
-
-    bounds = [
-        (0.0, 1.0)
-        for _ in range(
-            number_of_assets
-        )
-    ]
 
     constraints = {
         "type": "eq",
@@ -217,8 +280,9 @@ def minimum_volatility_portfolio(
         )
 
     optimized_weights = (
-        normalize_optimized_weights(
-            result.x
+        clean_optimized_weights(
+            result.x,
+            max_weight,
         )
     )
 
@@ -236,6 +300,7 @@ def maximum_sharpe_portfolio(
     annual_risk_free_rate=0.04,
     periods_per_year=252,
     sample=True,
+    max_weight=1.0,
 ):
     validate_asset_returns(
         asset_returns
@@ -245,16 +310,14 @@ def maximum_sharpe_portfolio(
         asset_returns
     )
 
+    bounds = create_bounds(
+        number_of_assets,
+        max_weight,
+    )
+
     initial_weights = [
         1 / number_of_assets
     ] * number_of_assets
-
-    bounds = [
-        (0.0, 1.0)
-        for _ in range(
-            number_of_assets
-        )
-    ]
 
     constraints = {
         "type": "eq",
@@ -264,14 +327,12 @@ def maximum_sharpe_portfolio(
     }
 
     def objective(weights):
-        metrics = (
-            portfolio_metrics(
-                weights,
-                asset_returns,
-                annual_risk_free_rate,
-                periods_per_year,
-                sample,
-            )
+        metrics = portfolio_metrics(
+            weights,
+            asset_returns,
+            annual_risk_free_rate,
+            periods_per_year,
+            sample,
         )
 
         return -metrics[
@@ -297,8 +358,9 @@ def maximum_sharpe_portfolio(
         )
 
     optimized_weights = (
-        normalize_optimized_weights(
-            result.x
+        clean_optimized_weights(
+            result.x,
+            max_weight,
         )
     )
 
@@ -329,17 +391,13 @@ def create_target_returns(
         number_of_points - 1
     )
 
-    target_returns = []
-
-    for i in range(
-        number_of_points
-    ):
-        target_returns.append(
-            minimum_return
-            + i * step
+    return [
+        minimum_return
+        + i * step
+        for i in range(
+            number_of_points
         )
-
-    return target_returns
+    ]
 
 
 def efficient_frontier(
@@ -348,6 +406,7 @@ def efficient_frontier(
     periods_per_year=252,
     sample=True,
     number_of_points=60,
+    max_weight=1.0,
 ):
     validate_asset_returns(
         asset_returns
@@ -357,33 +416,38 @@ def efficient_frontier(
         asset_returns
     )
 
+    bounds = create_bounds(
+        number_of_assets,
+        max_weight,
+    )
+
     expected_period_returns = (
         calculate_expected_period_returns(
             asset_returns
         )
     )
 
-    annual_asset_returns = []
-
-    for expected_return in expected_period_returns:
-        annual_asset_returns.append(
-            annualized_arithmetic_return(
-                expected_return,
-                periods_per_year,
-            )
+    annual_asset_returns = [
+        annualized_arithmetic_return(
+            expected_return,
+            periods_per_year,
         )
+        for expected_return
+        in expected_period_returns
+    ]
 
-    min_volatility_portfolio = (
+    minimum_portfolio = (
         minimum_volatility_portfolio(
             asset_returns,
             annual_risk_free_rate,
             periods_per_year,
             sample,
+            max_weight=max_weight,
         )
     )
 
     minimum_target_return = (
-        min_volatility_portfolio[
+        minimum_portfolio[
             "annual_return"
         ]
     )
@@ -400,17 +464,10 @@ def efficient_frontier(
         )
     )
 
-    bounds = [
-        (0.0, 1.0)
-        for _ in range(
-            number_of_assets
-        )
-    ]
-
     frontier = []
 
     initial_weights = (
-        min_volatility_portfolio[
+        minimum_portfolio[
             "weights"
         ]
     )
@@ -430,8 +487,7 @@ def efficient_frontier(
             weights,
         ):
             return (
-                sum(weights)
-                - 1
+                sum(weights) - 1
             )
 
         def return_constraint(
@@ -483,8 +539,9 @@ def efficient_frontier(
             continue
 
         optimized_weights = (
-            normalize_optimized_weights(
-                result.x
+            clean_optimized_weights(
+                result.x,
+                max_weight,
             )
         )
 
@@ -504,9 +561,6 @@ def efficient_frontier(
             metrics
         )
 
-        # Starting the next optimization near the
-        # previous solution makes the frontier
-        # calculation more stable and efficient.
         initial_weights = (
             optimized_weights
         )
