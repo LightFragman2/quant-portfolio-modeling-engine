@@ -1,4 +1,16 @@
-from src.returns import calculate_simple_returns
+from datetime import (
+    datetime,
+    timezone,
+)
+
+from src.market_data import (
+    get_historical_close_prices,
+    get_latest_trade_prices,
+)
+
+from src.returns import (
+    calculate_simple_returns,
+)
 
 from src.statistics import (
     arithmetic_mean,
@@ -43,7 +55,9 @@ def print_portfolio(
     portfolio,
     asset_names,
 ):
-    print(f"\n{title}")
+    print(
+        f"\n{title}"
+    )
 
     print(
         f"Annual return: "
@@ -60,244 +74,350 @@ def print_portfolio(
         f"{portfolio['sharpe_ratio']:.4f}"
     )
 
-    print("Weights:")
+    print(
+        "Weights:"
+    )
 
     for name, weight in zip(
         asset_names,
         portfolio["weights"],
     ):
         print(
-            f"  {name}: {weight:.2%}"
+            f"  {name}: "
+            f"{weight:.2%}"
         )
 
 
 def main():
     print(
-        "=== Quant Portfolio Modeling Engine ==="
+        "======================================="
     )
 
-    stock_a_prices = [
-        100,
-        104,
-        102,
-        108,
-        112,
-        110,
-        115,
-        117,
-        116,
-        120,
+    print(
+        "   Quant Portfolio Modeling Engine"
+    )
+
+    print(
+        "======================================="
+    )
+
+    asset_symbols = [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "JPM",
     ]
 
-    stock_b_prices = [
-        50,
-        51,
-        53,
-        52,
-        55,
-        56,
-        54,
-        57,
-        59,
-        60,
-    ]
+    benchmark_symbol = "SPY"
 
-    stock_c_prices = [
-        80,
-        79,
-        82,
-        84,
-        83,
-        86,
-        88,
-        87,
-        90,
-        92,
-    ]
+    all_symbols = (
+        asset_symbols
+        + [benchmark_symbol]
+    )
 
-    market_prices = [
-        200,
-        204,
-        202,
-        207,
-        211,
-        210,
-        214,
-        216,
-        215,
-        219,
-    ]
+    start_date = datetime(
+        2021,
+        1,
+        1,
+        tzinfo=timezone.utc,
+    )
 
-    stock_a_returns = (
-        calculate_simple_returns(
-            stock_a_prices
+    print(
+        "\nDownloading historical market data..."
+    )
+
+    historical_prices, dates = (
+        get_historical_close_prices(
+            symbols=all_symbols,
+            start_date=start_date,
         )
     )
 
-    stock_b_returns = (
-        calculate_simple_returns(
-            stock_b_prices
+    print(
+        f"Loaded {len(dates):,} "
+        f"aligned trading days."
+    )
+
+    print(
+        f"Historical start: "
+        f"{dates[0].date()}"
+    )
+
+    print(
+        f"Historical end: "
+        f"{dates[-1].date()}"
+    )
+
+    print(
+        "\n--- Latest Market Prices ---"
+    )
+
+    latest_prices = (
+        get_latest_trade_prices(
+            all_symbols
         )
     )
 
-    stock_c_returns = (
-        calculate_simple_returns(
-            stock_c_prices
+    for symbol in all_symbols:
+        latest = (
+            latest_prices[
+                symbol
+            ]
         )
-    )
 
-    market_returns = (
-        calculate_simple_returns(
-            market_prices
+        print(
+            f"{symbol}: "
+            f"${latest['price']:.2f}"
         )
-    )
-
-    print("\n--- Returns ---")
 
     print(
-        "Stock A:",
-        stock_a_returns,
+        "\nCalculating returns..."
     )
 
-    print(
-        "Stock B:",
-        stock_b_returns,
-    )
+    returns_by_symbol = {}
 
-    print(
-        "Stock C:",
-        stock_c_returns,
-    )
-
-    mean_a = arithmetic_mean(
-        stock_a_returns
-    )
-
-    mean_b = arithmetic_mean(
-        stock_b_returns
-    )
-
-    mean_c = arithmetic_mean(
-        stock_c_returns
-    )
-
-    variance_a = variance(
-        stock_a_returns
-    )
-
-    volatility_a = standard_deviation(
-        stock_a_returns
-    )
-
-    covariance_ab = covariance(
-        stock_a_returns,
-        stock_b_returns,
-    )
-
-    correlation_ab = correlation(
-        stock_a_returns,
-        stock_b_returns,
-    )
-
-    print(
-        "\n--- Asset Statistics ---"
-    )
-
-    print(
-        f"Stock A mean return: "
-        f"{mean_a:.4%}"
-    )
-
-    print(
-        f"Stock B mean return: "
-        f"{mean_b:.4%}"
-    )
-
-    print(
-        f"Stock C mean return: "
-        f"{mean_c:.4%}"
-    )
-
-    print(
-        f"Stock A variance: "
-        f"{variance_a:.8f}"
-    )
-
-    print(
-        f"Stock A volatility: "
-        f"{volatility_a:.4%}"
-    )
-
-    print(
-        f"A/B covariance: "
-        f"{covariance_ab:.8f}"
-    )
-
-    print(
-        f"A/B correlation: "
-        f"{correlation_ab:.4f}"
-    )
-
-    weights = [
-        0.50,
-        0.30,
-        0.20,
-    ]
-
-    expected_returns = [
-        mean_a,
-        mean_b,
-        mean_c,
-    ]
+    for symbol in all_symbols:
+        returns_by_symbol[
+            symbol
+        ] = calculate_simple_returns(
+            historical_prices[
+                symbol
+            ]
+        )
 
     asset_returns = [
-        stock_a_returns,
-        stock_b_returns,
-        stock_c_returns,
+        returns_by_symbol[
+            symbol
+        ]
+        for symbol in asset_symbols
     ]
 
-    expected_portfolio_return = (
+    market_returns = (
+        returns_by_symbol[
+            benchmark_symbol
+        ]
+    )
+
+    print(
+        "\n--- Historical Asset Statistics ---"
+    )
+
+    for symbol in asset_symbols:
+        returns = (
+            returns_by_symbol[
+                symbol
+            ]
+        )
+
+        mean_return = (
+            arithmetic_mean(
+                returns
+            )
+        )
+
+        asset_variance = (
+            variance(
+                returns,
+                sample=True,
+            )
+        )
+
+        daily_volatility = (
+            standard_deviation(
+                returns,
+                sample=True,
+            )
+        )
+
+        annual_return = (
+            annualized_arithmetic_return(
+                mean_return
+            )
+        )
+
+        annual_volatility_value = (
+            annualized_volatility(
+                daily_volatility
+            )
+        )
+
+        compounded_return = (
+            annualized_compounded_return(
+                returns
+            )
+        )
+
+        total_return = (
+            cumulative_return(
+                returns
+            )
+        )
+
+        print(
+            f"\n{symbol}"
+        )
+
+        print(
+            f"  Annual arithmetic return: "
+            f"{annual_return:.2%}"
+        )
+
+        print(
+            f"  Annual compounded return: "
+            f"{compounded_return:.2%}"
+        )
+
+        print(
+            f"  Annual volatility: "
+            f"{annual_volatility_value:.2%}"
+        )
+
+        print(
+            f"  Historical cumulative return: "
+            f"{total_return:.2%}"
+        )
+
+        print(
+            f"  Daily variance: "
+            f"{asset_variance:.8f}"
+        )
+
+    print(
+        "\n--- Correlation Example ---"
+    )
+
+    correlation_value = (
+        correlation(
+            returns_by_symbol["AAPL"],
+            returns_by_symbol["MSFT"],
+            sample=True,
+        )
+    )
+
+    covariance_value = (
+        covariance(
+            returns_by_symbol["AAPL"],
+            returns_by_symbol["MSFT"],
+            sample=True,
+        )
+    )
+
+    print(
+        f"AAPL / MSFT covariance: "
+        f"{covariance_value:.8f}"
+    )
+
+    print(
+        f"AAPL / MSFT correlation: "
+        f"{correlation_value:.4f}"
+    )
+
+    print(
+        "\n--- Beta / Regression vs SPY ---"
+    )
+
+    for symbol in asset_symbols:
+        stock_returns = (
+            returns_by_symbol[
+                symbol
+            ]
+        )
+
+        stock_beta = beta(
+            stock_returns,
+            market_returns,
+            sample=True,
+        )
+
+        alpha, regression_beta = (
+            linear_regression(
+                market_returns,
+                stock_returns,
+                sample=True,
+            )
+        )
+
+        print(
+            f"\n{symbol}"
+        )
+
+        print(
+            f"  Beta: "
+            f"{stock_beta:.4f}"
+        )
+
+        print(
+            f"  Regression alpha: "
+            f"{alpha:.6f}"
+        )
+
+        print(
+            f"  Regression beta: "
+            f"{regression_beta:.4f}"
+        )
+
+    print(
+        "\n--- Equal-Weight Portfolio ---"
+    )
+
+    number_of_assets = len(
+        asset_symbols
+    )
+
+    equal_weights = [
+        1 / number_of_assets
+    ] * number_of_assets
+
+    expected_daily_returns = [
+        arithmetic_mean(
+            returns_by_symbol[
+                symbol
+            ]
+        )
+        for symbol in asset_symbols
+    ]
+
+    daily_portfolio_return = (
         portfolio_expected_return(
-            weights,
-            expected_returns,
+            equal_weights,
+            expected_daily_returns,
         )
     )
 
-    portfolio_variance_value = (
+    daily_portfolio_variance = (
         multi_asset_portfolio_variance(
-            weights,
+            equal_weights,
             asset_returns,
+            sample=True,
         )
     )
 
-    portfolio_volatility_value = (
+    daily_portfolio_volatility = (
         portfolio_volatility(
-            portfolio_variance_value
+            daily_portfolio_variance
         )
     )
 
     annual_portfolio_return = (
         annualized_arithmetic_return(
-            expected_portfolio_return
+            daily_portfolio_return
         )
     )
 
     annual_portfolio_volatility = (
         annualized_volatility(
-            portfolio_volatility_value
+            daily_portfolio_volatility
         )
     )
 
     annual_risk_free_rate = 0.04
 
-    portfolio_sharpe = sharpe_ratio(
-        annual_portfolio_return,
-        annual_risk_free_rate,
-        annual_portfolio_volatility,
-    )
-
-    print(
-        "\n--- Example Portfolio ---"
+    equal_weight_sharpe = (
+        sharpe_ratio(
+            annual_portfolio_return,
+            annual_risk_free_rate,
+            annual_portfolio_volatility,
+        )
     )
 
     print(
@@ -312,93 +432,27 @@ def main():
 
     print(
         f"Sharpe ratio: "
-        f"{portfolio_sharpe:.4f}"
+        f"{equal_weight_sharpe:.4f}"
     )
 
-    annual_return_a = (
-        annualized_arithmetic_return(
-            mean_a
+    print(
+        "\nWeights:"
+    )
+
+    for symbol, weight in zip(
+        asset_symbols,
+        equal_weights,
+    ):
+        print(
+            f"  {symbol}: "
+            f"{weight:.2%}"
         )
-    )
-
-    annual_volatility_a = (
-        annualized_volatility(
-            volatility_a
-        )
-    )
-
-    cumulative_return_a = (
-        cumulative_return(
-            stock_a_returns
-        )
-    )
-
-    compounded_annual_return_a = (
-        annualized_compounded_return(
-            stock_a_returns
-        )
-    )
-
-    print(
-        "\n--- Annualized Stock A Statistics ---"
-    )
-
-    print(
-        f"Arithmetic annual return: "
-        f"{annual_return_a:.2%}"
-    )
-
-    print(
-        f"Annual volatility: "
-        f"{annual_volatility_a:.2%}"
-    )
-
-    print(
-        f"Cumulative return: "
-        f"{cumulative_return_a:.2%}"
-    )
-
-    print(
-        f"Compounded annual return: "
-        f"{compounded_annual_return_a:.2%}"
-    )
-
-    stock_a_beta = beta(
-        stock_a_returns,
-        market_returns,
-    )
-
-    alpha, regression_beta = (
-        linear_regression(
-            market_returns,
-            stock_a_returns,
-        )
-    )
-
-    print(
-        "\n--- Market Analysis ---"
-    )
-
-    print(
-        f"Stock A beta: "
-        f"{stock_a_beta:.4f}"
-    )
-
-    print(
-        f"Regression alpha: "
-        f"{alpha:.6f}"
-    )
-
-    print(
-        f"Regression beta: "
-        f"{regression_beta:.4f}"
-    )
 
     print(
         "\n--- Monte Carlo Simulation ---"
     )
 
-    number_of_portfolios = 5000
+    number_of_portfolios = 10000
 
     simulation_results = (
         simulate_portfolios(
@@ -406,6 +460,7 @@ def main():
             number_of_portfolios=number_of_portfolios,
             annual_risk_free_rate=annual_risk_free_rate,
             periods_per_year=252,
+            sample=True,
             seed=42,
         )
     )
@@ -428,22 +483,16 @@ def main():
         )
     )
 
-    asset_names = [
-        "Stock A",
-        "Stock B",
-        "Stock C",
-    ]
-
     print_portfolio(
         "Highest-Sharpe Sampled Portfolio",
         max_sharpe,
-        asset_names,
+        asset_symbols,
     )
 
     print_portfolio(
         "Lowest-Volatility Sampled Portfolio",
         min_volatility,
-        asset_names,
+        asset_symbols,
     )
 
     plot_path = (
@@ -456,7 +505,9 @@ def main():
         "\nMonte Carlo plot saved to:"
     )
 
-    print(plot_path)
+    print(
+        plot_path
+    )
 
 
 if __name__ == "__main__":

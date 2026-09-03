@@ -23,6 +23,9 @@ htmlcov/
 .env
 .env.*
 
+# Allow the safe example environment file
+!.env.example
+
 # Operating system files
 .DS_Store
 Thumbs.db
