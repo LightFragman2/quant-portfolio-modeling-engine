@@ -6,5 +6,5 @@ pytest
 alpaca-py
 python-dotenv
 scipy
-streamlit
+streamlit==1.63.0
 altair
