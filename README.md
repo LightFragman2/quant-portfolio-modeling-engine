@@ -66,6 +66,7 @@ No local Python installation is required to use the deployed application.
 - Multi-asset portfolio variance
 - Portfolio volatility
 - Diversification analysis
+- Correlation analysis
 - Equal-weight portfolios
 - Long-only portfolios
 - Maximum position-size constraints
@@ -79,7 +80,7 @@ The engine can simulate thousands of possible portfolio allocations and calculat
 - Sharpe ratio
 - Asset weights
 
-The resulting portfolio cloud gives a visual representation of the available historical risk-return combinations.
+The resulting portfolio cloud provides a visual representation of historical risk-return combinations.
 
 ## Portfolio Optimization
 
@@ -89,13 +90,13 @@ The engine calculates:
 - Minimum-volatility portfolio
 - Target-return portfolios
 - Efficient frontier
-- Portfolios subject to position-size constraints
+- Portfolios subject to maximum position constraints
 
-Monte Carlo results can then be compared directly against mathematically optimized portfolios.
+Monte Carlo results can be compared directly against mathematically optimized portfolios.
 
 ## Walk-Forward Backtesting
 
-The engine supports rolling out-of-sample backtesting with:
+The engine supports rolling out-of-sample backtesting using:
 
 - Trailing historical training windows
 - Portfolio re-optimization
@@ -111,7 +112,7 @@ The engine supports rolling out-of-sample backtesting with:
 - Annualized volatility
 - Sharpe ratio
 
-The backtesting architecture is designed to avoid look-ahead bias by making each allocation using only information available before its testing period.
+The backtesting process is designed to avoid look-ahead bias by ensuring that each allocation uses only information available before its testing period.
 
 ---
 
@@ -132,7 +133,7 @@ Users can configure:
 - Rebalance frequency
 - Transaction costs
 
-The application currently includes:
+The application includes:
 
 - Overview
 - Correlation
@@ -150,7 +151,7 @@ The application currently includes:
 
 This project was intentionally built from first principles.
 
-Instead of immediately using high-level financial functions to perform every calculation, the important quantitative operations are implemented directly from their mathematical definitions whenever practical.
+Instead of immediately using high-level financial functions to perform every calculation, important quantitative operations are implemented directly from their mathematical definitions whenever practical.
 
 The goal is to understand the complete chain:
 
@@ -186,7 +187,7 @@ Efficient Frontier
 Walk-Forward Backtesting
 ```
 
-Scientific libraries are still used where they make sense for numerical optimization, data handling, visualization, and infrastructure.
+Scientific libraries are still used where appropriate for numerical optimization, market-data handling, visualization, and supporting infrastructure.
 
 ---
 
@@ -194,7 +195,7 @@ Scientific libraries are still used where they make sense for numerical optimiza
 
 ## Simple Return
 
-For an asset moving from price \(P_{t-1}\) to price \(P_t\):
+For an asset moving from price $P_{t-1}$ to price $P_t$:
 
 ```math
 R_t = \frac{P_t - P_{t-1}}{P_{t-1}}
@@ -206,10 +207,13 @@ This measures the percentage change in an asset's price from one period to the n
 
 ## Arithmetic Mean Return
 
-For returns \(R_1, R_2, \ldots, R_n\):
+For returns $R_1, R_2, \ldots, R_n$:
 
 ```math
-\bar{R} = \frac{1}{n}\sum_{i=1}^{n}R_i
+\bar{R}
+=
+\frac{1}{n}
+\sum_{i=1}^{n} R_i
 ```
 
 The arithmetic mean represents the average return across the observed periods.
@@ -221,7 +225,8 @@ The arithmetic mean represents the average return across the observed periods.
 Population variance:
 
 ```math
-\sigma^2 =
+\sigma^2
+=
 \frac{1}{n}
 \sum_{i=1}^{n}
 (R_i-\bar{R})^2
@@ -230,7 +235,8 @@ Population variance:
 Sample variance:
 
 ```math
-s^2 =
+s^2
+=
 \frac{1}{n-1}
 \sum_{i=1}^{n}
 (R_i-\bar{R})^2
@@ -243,7 +249,9 @@ The sample form is useful when historical market observations are treated as a s
 ## Standard Deviation / Volatility
 
 ```math
-\sigma = \sqrt{\sigma^2}
+\sigma
+=
+\sqrt{\sigma^2}
 ```
 
 Standard deviation measures the dispersion of returns and is used as a measure of historical volatility.
@@ -255,7 +263,7 @@ Standard deviation measures the dispersion of returns and is used as a measure o
 For assets A and B:
 
 ```math
-\operatorname{Cov}(A,B)
+\mathrm{Cov}(A,B)
 =
 \frac{1}{n}
 \sum_{i=1}^{n}
@@ -279,7 +287,7 @@ Correlation standardizes covariance:
 \rho_{A,B}
 =
 \frac{
-\operatorname{Cov}(A,B)
+\mathrm{Cov}(A,B)
 }{
 \sigma_A \sigma_B
 }
@@ -288,7 +296,11 @@ Correlation standardizes covariance:
 Correlation is bounded by:
 
 ```math
--1 \leq \rho_{A,B} \leq 1
+-1
+\le
+\rho_{A,B}
+\le
+1
 ```
 
 Lower correlation between portfolio assets can create diversification benefits.
@@ -299,25 +311,25 @@ Lower correlation between portfolio assets can create diversification benefits.
 
 ## Portfolio Expected Return
 
-For a portfolio containing \(n\) assets:
+For a portfolio containing $n$ assets:
 
 ```math
 E[R_p]
 =
 \sum_{i=1}^{n}
-w_iE[R_i]
+w_i E[R_i]
 ```
 
 For a fully invested portfolio:
 
 ```math
-\sum_{i=1}^{n}w_i = 1
+\sum_{i=1}^{n} w_i = 1
 ```
 
 where:
 
-- \(w_i\) is the weight of asset \(i\)
-- \(E[R_i]\) is the expected return of asset \(i\)
+- $w_i$ is the weight of asset $i$
+- $E[R_i]$ is the expected return of asset $i$
 
 ---
 
@@ -332,7 +344,7 @@ w_A^2\sigma_A^2
 +
 w_B^2\sigma_B^2
 +
-2w_Aw_B\operatorname{Cov}(A,B)
+2w_Aw_B\mathrm{Cov}(A,B)
 ```
 
 Using correlation:
@@ -347,7 +359,7 @@ w_B^2\sigma_B^2
 2w_Aw_B\rho_{A,B}\sigma_A\sigma_B
 ```
 
-This covariance term is the mathematical reason diversification can reduce portfolio risk.
+The covariance term is the mathematical reason diversification can reduce portfolio risk.
 
 ---
 
@@ -360,21 +372,24 @@ For multiple assets:
 =
 \sum_i w_i^2\sigma_i^2
 +
-2\sum_{i<j}
-w_iw_j\operatorname{Cov}(i,j)
+2
+\sum_{i<j}
+w_iw_j\mathrm{Cov}(i,j)
 ```
 
 The compact matrix form is:
 
 ```math
-\sigma_p^2 = w^T \Sigma w
+\sigma_p^2
+=
+w^T \Sigma w
 ```
 
 where:
 
-- \(w\) is the portfolio weight vector
-- \(w^T\) is the transpose of the weight vector
-- \(\Sigma\) is the covariance matrix
+- $w$ is the portfolio weight vector
+- $w^T$ is the transpose of the weight vector
+- $\Sigma$ is the covariance matrix
 
 The project implements the expanded variance and covariance calculation directly.
 
@@ -385,7 +400,9 @@ The project implements the expanded variance and covariance calculation directly
 Portfolio volatility is the square root of portfolio variance:
 
 ```math
-\sigma_p = \sqrt{\sigma_p^2}
+\sigma_p
+=
+\sqrt{\sigma_p^2}
 ```
 
 ---
@@ -395,7 +412,8 @@ Portfolio volatility is the square root of portfolio variance:
 The Sharpe ratio measures excess return per unit of volatility.
 
 ```math
-S =
+S
+=
 \frac{
 R_p-R_f
 }{
@@ -405,9 +423,9 @@ R_p-R_f
 
 where:
 
-- \(R_p\) = portfolio return
-- \(R_f\) = risk-free rate
-- \(\sigma_p\) = portfolio volatility
+- $R_p$ = portfolio return
+- $R_f$ = risk-free rate
+- $\sigma_p$ = portfolio volatility
 
 Higher Sharpe ratios indicate more historical excess return relative to the amount of volatility taken.
 
@@ -421,11 +439,16 @@ Beta measures an asset's historical sensitivity to movements in a market benchma
 \beta
 =
 \frac{
-\operatorname{Cov}(R_{\text{stock}},R_{\text{market}})
+\mathrm{Cov}(R_s,R_m)
 }{
-\operatorname{Var}(R_{\text{market}})
+\mathrm{Var}(R_m)
 }
 ```
+
+where:
+
+- $R_s$ = stock returns
+- $R_m$ = market returns
 
 A beta greater than 1 indicates greater historical sensitivity to market movements.
 
@@ -438,17 +461,23 @@ A beta below 1 indicates lower historical sensitivity.
 The engine implements the model:
 
 ```math
-Y = \alpha + \beta X + \epsilon
+Y
+=
+\alpha
++
+\beta X
++
+\epsilon
 ```
 
 For stock returns relative to market returns:
 
 ```math
-R_{\text{stock}}
+R_s
 =
 \alpha
 +
-\beta R_{\text{market}}
+\beta R_m
 +
 \epsilon
 ```
@@ -459,9 +488,9 @@ The regression slope is:
 \beta
 =
 \frac{
-\operatorname{Cov}(X,Y)
+\mathrm{Cov}(X,Y)
 }{
-\operatorname{Var}(X)
+\mathrm{Var}(X)
 }
 ```
 
@@ -484,9 +513,9 @@ The engine assumes approximately 252 trading days per year for daily market data
 ## Arithmetic Annualized Return
 
 ```math
-R_{\text{annual}}
+R_{\mathrm{annual}}
 \approx
-252\bar{R}_{\text{daily}}
+252\bar{R}_{\mathrm{daily}}
 ```
 
 ---
@@ -494,9 +523,10 @@ R_{\text{annual}}
 ## Annualized Volatility
 
 ```math
-\sigma_{\text{annual}}
+\sigma_{\mathrm{annual}}
 =
-\sigma_{\text{daily}}\sqrt{252}
+\sigma_{\mathrm{daily}}
+\sqrt{252}
 ```
 
 Variance scales approximately with time, causing standard deviation to scale with the square root of time.
@@ -508,10 +538,11 @@ Variance scales approximately with time, causing standard deviation to scale wit
 Returns must be compounded through time.
 
 ```math
-R_{\text{cumulative}}
+R_{\mathrm{cumulative}}
 =
 \left[
-\prod_{t=1}^{n}(1+R_t)
+\prod_{t=1}^{n}
+(1+R_t)
 \right]
 -1
 ```
@@ -521,10 +552,11 @@ R_{\text{cumulative}}
 ## Compounded Annualized Return
 
 ```math
-R_{\text{annualized}}
+R_{\mathrm{annualized}}
 =
 \left(
-\prod_{t=1}^{n}(1+R_t)
+\prod_{t=1}^{n}
+(1+R_t)
 \right)^{252/n}
 -1
 ```
@@ -535,29 +567,35 @@ R_{\text{annualized}}
 
 Monte Carlo simulation explores many possible portfolio allocations.
 
-For a long-only, fully invested portfolio:
+For a long-only portfolio:
 
 ```math
-w_i \geq 0
+w_i
+\ge
+0
 ```
 
-and:
+For a fully invested portfolio:
 
 ```math
-\sum_i w_i = 1
+\sum_i w_i
+=
+1
 ```
 
-For every simulated portfolio, the engine calculates:
+For every simulated portfolio, the engine calculates expected return:
 
 ```math
 E[R_p]
 ```
 
+volatility:
+
 ```math
 \sigma_p
 ```
 
-and:
+and Sharpe ratio:
 
 ```math
 S_p
@@ -565,11 +603,9 @@ S_p
 
 The simulation creates a cloud of possible historical risk-return combinations.
 
-Monte Carlo simulation does not mathematically prove that a portfolio is optimal.
+Monte Carlo simulation does not mathematically prove that a portfolio is optimal. It samples the available portfolio space.
 
-It samples the available portfolio space.
-
-The numerical optimization engine separately attempts to solve directly for an optimal portfolio.
+The numerical optimization engine separately attempts to solve directly for optimal portfolios.
 
 ---
 
@@ -588,13 +624,19 @@ The minimum-volatility objective is:
 subject to:
 
 ```math
-\sum_iw_i = 1
+\sum_i w_i
+=
+1
 ```
 
 and for a long-only portfolio:
 
 ```math
-0 \leq w_i \leq w_{\max}
+0
+\le
+w_i
+\le
+w_{\max}
 ```
 
 ---
@@ -614,38 +656,47 @@ E[R_p]-R_f
 \right)
 ```
 
-Because numerical optimization software generally minimizes an objective function, the implementation minimizes negative Sharpe:
+Because numerical optimization software generally minimizes objective functions, the implementation minimizes the negative Sharpe ratio:
 
 ```math
-\min_w(-S)
+\min_w (-S)
 ```
 
-which is mathematically equivalent to maximizing Sharpe.
+This is mathematically equivalent to maximizing $S$.
 
 ---
 
 # Efficient Frontier
 
-For a series of target returns \(R^*\), the engine solves:
+For a series of target returns $R^*$, the engine solves:
 
 ```math
-\min_w \sigma_p^2
+\min_w
+\sigma_p^2
 ```
 
 subject to:
 
 ```math
-E[R_p] = R^*
+E[R_p]
+=
+R^*
 ```
 
 ```math
-\sum_i w_i = 1
+\sum_i w_i
+=
+1
 ```
 
 and:
 
 ```math
-0 \leq w_i \leq w_{\max}
+0
+\le
+w_i
+\le
+w_{\max}
 ```
 
 The resulting minimum-risk portfolios form the efficient frontier.
@@ -695,7 +746,7 @@ This approximates:
 - Two years of trailing historical data
 - Quarterly portfolio rebalancing
 
-At every rebalance date, only information available before that date is used to calculate the portfolio for the next test period.
+At every rebalance date, only information available before that date is used to calculate the portfolio for the next testing period.
 
 ---
 
@@ -718,19 +769,21 @@ The engine allows this weight drift to occur until the next rebalance.
 
 # Portfolio Turnover
 
-One-way portfolio turnover is calculated using:
+One-way portfolio turnover is:
 
 ```math
-\text{Turnover}
+T
 =
 \frac{1}{2}
 \sum_i
 \left|
-w_{i,\text{new}}
+w_{i,\mathrm{new}}
 -
-w_{i,\text{old}}
+w_{i,\mathrm{old}}
 \right|
 ```
+
+where $T$ represents turnover.
 
 For example, moving from:
 
@@ -749,28 +802,37 @@ Asset B: 0%
 results in:
 
 ```math
-\text{Turnover} = 50\%
+T
+=
+0.50
 ```
+
+or 50% turnover.
 
 ---
 
 # Transaction Costs
 
-Transaction costs are modeled using the amount of portfolio turnover.
+Let:
 
-If the cost is expressed in basis points:
+- $T$ = portfolio turnover
+- $b$ = transaction cost in basis points
+- $C$ = transaction-cost rate
+
+Then:
 
 ```math
-\text{Cost Rate}
+C
 =
-\text{Turnover}
-\times
-\frac{\text{Basis Points}}{10,000}
+T
+\left(
+\frac{b}{10000}
+\right)
 ```
 
 This allows the backtest to recognize that portfolio rebalancing is not free.
 
-The current transaction-cost model is intentionally simplified and does not attempt to replicate every component of real-world execution.
+The current transaction-cost model is intentionally simplified and does not attempt to reproduce every component of real-world trade execution.
 
 ---
 
@@ -781,7 +843,11 @@ The optimizer supports limits on the amount invested in any individual asset.
 For example, a 40% concentration cap imposes:
 
 ```math
-0 \leq w_i \leq 0.40
+0
+\le
+w_i
+\le
+0.40
 ```
 
 This makes it possible to compare an unrestricted optimizer against a more diversified portfolio.
@@ -800,28 +866,35 @@ Maximum Sharpe with 40% Position Cap
 
 # Maximum Drawdown
 
-Drawdown measures the decline from a previous portfolio peak.
+Let $V_t$ be portfolio value at time $t$.
 
-At time \(t\):
+The running peak is:
+
+```math
+P_t
+=
+\max_{s \le t}
+V_s
+```
+
+Drawdown is:
 
 ```math
 D_t
 =
-\frac{
-V_t
-}{
-\max_{s \leq t}V_s
-}
+\frac{V_t}{P_t}
 -1
 ```
 
-Maximum drawdown is the most negative drawdown experienced during the backtest:
+Maximum drawdown is:
 
 ```math
-\text{Maximum Drawdown}
+D_{\max}
 =
 \min_t D_t
 ```
+
+It represents the largest peak-to-trough decline observed during the backtest.
 
 ---
 
@@ -835,14 +908,14 @@ The backtesting engine can compare:
 - Equal Weight
 - Market benchmark
 
-Strategies are evaluated using metrics such as:
+Strategies are evaluated using:
 
 | Metric | Purpose |
 |---|---|
 | CAGR | Long-run compounded growth |
 | Volatility | Historical variability of returns |
 | Sharpe Ratio | Excess return per unit of volatility |
-| Maximum Drawdown | Largest peak-to-trough loss |
+| Maximum Drawdown | Largest peak-to-trough decline |
 | Turnover | Amount of portfolio reallocation |
 | Transaction Costs | Estimated cost of rebalancing |
 
@@ -1156,7 +1229,7 @@ These limitations are part of the reason the project includes:
 Potential future additions include:
 
 - Sensitivity analysis
-- Rolling return
+- Rolling returns
 - Rolling volatility
 - Rolling Sharpe ratio
 - Drawdown visualizations
