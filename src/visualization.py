@@ -12,7 +12,8 @@ def plot_monte_carlo_portfolios(
     simulation_results,
     optimized_max_sharpe=None,
     optimized_min_volatility=None,
-    output_path="outputs/monte_carlo_portfolios.png",
+    efficient_frontier_points=None,
+    output_path="outputs/portfolio_analysis.png",
 ):
     if len(simulation_results) == 0:
         raise ValueError(
@@ -64,7 +65,7 @@ def plot_monte_carlo_portfolios(
     )
 
     plt.figure(
-        figsize=(11, 7)
+        figsize=(12, 8)
     )
 
     scatter = plt.scatter(
@@ -72,9 +73,43 @@ def plot_monte_carlo_portfolios(
         returns,
         c=sharpe_ratios,
         cmap="viridis",
-        alpha=0.5,
+        alpha=0.45,
         s=14,
     )
+
+    if (
+        efficient_frontier_points
+        is not None
+    ):
+        frontier_volatilities = []
+        frontier_returns = []
+
+        sorted_frontier = sorted(
+            efficient_frontier_points,
+            key=lambda portfolio: portfolio[
+                "annual_volatility"
+            ],
+        )
+
+        for portfolio in sorted_frontier:
+            frontier_volatilities.append(
+                portfolio[
+                    "annual_volatility"
+                ]
+            )
+
+            frontier_returns.append(
+                portfolio[
+                    "annual_return"
+                ]
+            )
+
+        plt.plot(
+            frontier_volatilities,
+            frontier_returns,
+            linewidth=3,
+            label="Efficient Frontier",
+        )
 
     plt.scatter(
         sampled_max_sharpe[
@@ -135,7 +170,7 @@ def plot_monte_carlo_portfolios(
     )
 
     plt.title(
-        "Monte Carlo Portfolio Simulation"
+        "Portfolio Optimization and Efficient Frontier"
     )
 
     colorbar = plt.colorbar(

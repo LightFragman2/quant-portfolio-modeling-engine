@@ -48,6 +48,7 @@ from src.monte_carlo import (
 from src.optimization import (
     maximum_sharpe_portfolio as optimized_maximum_sharpe,
     minimum_volatility_portfolio as optimized_minimum_volatility,
+    efficient_frontier,
 )
 
 from src.visualization import (
@@ -602,16 +603,51 @@ def main():
         f"{true_min_volatility['annual_volatility']:.6%}"
     )
 
+    print(
+        "\n--- Efficient Frontier ---"
+    )
+
+    frontier = efficient_frontier(
+        asset_returns,
+        annual_risk_free_rate=annual_risk_free_rate,
+        periods_per_year=252,
+        sample=True,
+        number_of_points=60,
+    )
+
+    print(
+        f"Calculated "
+        f"{len(frontier)} "
+        f"efficient-frontier portfolios."
+    )
+
+    print(
+        f"Frontier begins at "
+        f"{frontier[0]['annual_return']:.2%} "
+        f"return / "
+        f"{frontier[0]['annual_volatility']:.2%} "
+        f"volatility."
+    )
+
+    print(
+        f"Frontier ends at "
+        f"{frontier[-1]['annual_return']:.2%} "
+        f"return / "
+        f"{frontier[-1]['annual_volatility']:.2%} "
+        f"volatility."
+    )
+
     plot_path = (
         plot_monte_carlo_portfolios(
             simulation_results,
             optimized_max_sharpe=true_max_sharpe,
             optimized_min_volatility=true_min_volatility,
+            efficient_frontier_points=frontier,
         )
     )
 
     print(
-        "\nPortfolio plot saved to:"
+        "\nPortfolio analysis plot saved to:"
     )
 
     print(

@@ -38,6 +38,21 @@ def validate_asset_returns(asset_returns):
             )
 
 
+def calculate_expected_period_returns(
+    asset_returns,
+):
+    expected_returns = []
+
+    for returns in asset_returns:
+        expected_returns.append(
+            arithmetic_mean(
+                returns
+            )
+        )
+
+    return expected_returns
+
+
 def portfolio_metrics(
     weights,
     asset_returns,
@@ -49,14 +64,11 @@ def portfolio_metrics(
         asset_returns
     )
 
-    expected_period_returns = []
-
-    for returns in asset_returns:
-        expected_period_returns.append(
-            arithmetic_mean(
-                returns
-            )
+    expected_period_returns = (
+        calculate_expected_period_returns(
+            asset_returns
         )
+    )
 
     period_return = (
         portfolio_expected_return(
@@ -297,3 +309,212 @@ def maximum_sharpe_portfolio(
         periods_per_year,
         sample,
     )
+
+
+def create_target_returns(
+    minimum_return,
+    maximum_return,
+    number_of_points,
+):
+    if number_of_points < 2:
+        raise ValueError(
+            "Efficient frontier requires at least "
+            "two points."
+        )
+
+    step = (
+        maximum_return
+        - minimum_return
+    ) / (
+        number_of_points - 1
+    )
+
+    target_returns = []
+
+    for i in range(
+        number_of_points
+    ):
+        target_returns.append(
+            minimum_return
+            + i * step
+        )
+
+    return target_returns
+
+
+def efficient_frontier(
+    asset_returns,
+    annual_risk_free_rate=0.04,
+    periods_per_year=252,
+    sample=True,
+    number_of_points=60,
+):
+    validate_asset_returns(
+        asset_returns
+    )
+
+    number_of_assets = len(
+        asset_returns
+    )
+
+    expected_period_returns = (
+        calculate_expected_period_returns(
+            asset_returns
+        )
+    )
+
+    annual_asset_returns = []
+
+    for expected_return in expected_period_returns:
+        annual_asset_returns.append(
+            annualized_arithmetic_return(
+                expected_return,
+                periods_per_year,
+            )
+        )
+
+    min_volatility_portfolio = (
+        minimum_volatility_portfolio(
+            asset_returns,
+            annual_risk_free_rate,
+            periods_per_year,
+            sample,
+        )
+    )
+
+    minimum_target_return = (
+        min_volatility_portfolio[
+            "annual_return"
+        ]
+    )
+
+    maximum_target_return = max(
+        annual_asset_returns
+    )
+
+    target_returns = (
+        create_target_returns(
+            minimum_target_return,
+            maximum_target_return,
+            number_of_points,
+        )
+    )
+
+    bounds = [
+        (0.0, 1.0)
+        for _ in range(
+            number_of_assets
+        )
+    ]
+
+    frontier = []
+
+    initial_weights = (
+        min_volatility_portfolio[
+            "weights"
+        ]
+    )
+
+    def objective(weights):
+        return (
+            multi_asset_portfolio_variance(
+                weights,
+                asset_returns,
+                sample=sample,
+            )
+        )
+
+    for target_return in target_returns:
+
+        def weight_constraint(
+            weights,
+        ):
+            return (
+                sum(weights)
+                - 1
+            )
+
+        def return_constraint(
+            weights,
+        ):
+            period_return = (
+                portfolio_expected_return(
+                    weights,
+                    expected_period_returns,
+                )
+            )
+
+            annual_return = (
+                annualized_arithmetic_return(
+                    period_return,
+                    periods_per_year,
+                )
+            )
+
+            return (
+                annual_return
+                - target_return
+            )
+
+        constraints = [
+            {
+                "type": "eq",
+                "fun": weight_constraint,
+            },
+            {
+                "type": "eq",
+                "fun": return_constraint,
+            },
+        ]
+
+        result = minimize(
+            objective,
+            initial_weights,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=constraints,
+            options={
+                "maxiter": 2000,
+                "ftol": 1e-12,
+            },
+        )
+
+        if not result.success:
+            continue
+
+        optimized_weights = (
+            normalize_optimized_weights(
+                result.x
+            )
+        )
+
+        metrics = portfolio_metrics(
+            optimized_weights,
+            asset_returns,
+            annual_risk_free_rate,
+            periods_per_year,
+            sample,
+        )
+
+        metrics[
+            "target_return"
+        ] = target_return
+
+        frontier.append(
+            metrics
+        )
+
+        # Starting the next optimization near the
+        # previous solution makes the frontier
+        # calculation more stable and efficient.
+        initial_weights = (
+            optimized_weights
+        )
+
+    if len(frontier) == 0:
+        raise RuntimeError(
+            "Efficient frontier optimization "
+            "failed for all target returns."
+        )
+
+    return frontier
