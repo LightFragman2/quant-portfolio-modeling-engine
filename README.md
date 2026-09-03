@@ -4,31 +4,33 @@
 [![Python](https://img.shields.io/badge/Python-3.14-blue)](https://www.python.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Live%20App-red)](https://quant-portfolio-modeling-engine.streamlit.app/)
 
-A quantitative portfolio analysis, optimization, and backtesting engine built in Python from first principles.
+An interactive quantitative portfolio analysis, optimization, risk-management, and backtesting engine built in Python.
 
-The project retrieves real market data, calculates portfolio statistics, simulates thousands of portfolios, performs constrained optimization, constructs the efficient frontier, and evaluates strategies using walk-forward out-of-sample backtesting.
+The project retrieves real market data, implements core portfolio mathematics from first principles, simulates thousands of portfolios, performs constrained optimization, constructs the efficient frontier, runs walk-forward out-of-sample backtests, analyzes model sensitivity, and measures portfolio risk.
 
-A major goal of the project is to understand and implement the mathematics behind portfolio modeling instead of treating financial libraries as a black box.
-
----
-
-## Live Demo
+## Live Application
 
 ### [Launch the Quant Portfolio Modeling Engine](https://quant-portfolio-modeling-engine.streamlit.app/)
 
-The Streamlit application allows users to:
-
-- Enter their own U.S. stock or ETF tickers
-- Choose a benchmark
-- Select a historical period
-- Configure portfolio constraints
-- Run Monte Carlo simulations
-- Optimize portfolios
-- View the efficient frontier
-- Run walk-forward backtests
-- Compare portfolio strategies
+Users can enter their own U.S. stock or ETF tickers, configure the model, and run the analysis directly from a browser.
 
 No local Python installation is required to use the deployed application.
+
+---
+
+# Screenshots
+
+## Portfolio Dashboard
+
+![Portfolio Dashboard](assets/dashboard.png)
+
+## Monte Carlo Simulation and Efficient Frontier
+
+![Efficient Frontier](assets/efficient-frontier.png)
+
+## Walk-Forward Backtesting
+
+![Backtest Strategy Comparison](assets/backtest.png)
 
 ---
 
@@ -40,7 +42,7 @@ No local Python installation is required to use the deployed application.
 - Latest market prices
 - User-defined U.S. stock and ETF tickers
 - Custom benchmark selection
-- Custom historical date ranges
+- Custom historical date range
 - Alpaca Market Data API integration
 - Historical data export to CSV
 
@@ -48,8 +50,9 @@ No local Python installation is required to use the deployed application.
 
 - Simple returns
 - Arithmetic mean return
-- Variance
-- Standard deviation / volatility
+- Population and sample variance
+- Standard deviation
+- Volatility
 - Covariance
 - Correlation
 - Annualized arithmetic return
@@ -60,88 +63,117 @@ No local Python installation is required to use the deployed application.
 - Beta
 - Simple linear regression
 
-## Portfolio Analysis
+## Portfolio Modeling
 
 - Multi-asset expected return
 - Multi-asset portfolio variance
 - Portfolio volatility
 - Diversification analysis
-- Correlation analysis
-- Equal-weight portfolios
 - Long-only portfolios
+- Equal-weight portfolios
 - Maximum position-size constraints
+- Natural portfolio-weight drift
 
 ## Monte Carlo Simulation
 
-The engine can simulate thousands of possible portfolio allocations and calculate each portfolio's:
-
-- Expected annual return
-- Annualized volatility
-- Sharpe ratio
-- Asset weights
-
-The resulting portfolio cloud provides a visual representation of historical risk-return combinations.
+- Thousands of randomly generated portfolios
+- Expected return for every portfolio
+- Volatility for every portfolio
+- Sharpe ratio for every portfolio
+- User-defined maximum position constraint
+- Interactive risk-return visualization
 
 ## Portfolio Optimization
 
-The engine calculates:
-
 - Maximum-Sharpe portfolio
 - Minimum-volatility portfolio
-- Target-return portfolios
-- Efficient frontier
-- Portfolios subject to maximum position constraints
-
-Monte Carlo results can be compared directly against mathematically optimized portfolios.
+- Long-only constraints
+- Maximum position-size constraints
+- Target-return optimization
+- Efficient frontier construction
+- Monte Carlo vs. mathematical optimization comparison
 
 ## Walk-Forward Backtesting
 
-The engine supports rolling out-of-sample backtesting using:
-
 - Trailing historical training windows
-- Portfolio re-optimization
-- Periodic rebalancing
-- Natural portfolio-weight drift
+- Out-of-sample test periods
+- Periodic portfolio re-optimization
+- Natural weight drift between rebalances
 - Transaction costs
 - Portfolio turnover
-- Position constraints
 - Benchmark comparison
-- Growth of $1
 - Maximum drawdown
-- Annualized return
+- CAGR
 - Annualized volatility
 - Sharpe ratio
+- Growth-of-$1 comparison
 
-The backtesting process is designed to avoid look-ahead bias by ensuring that each allocation uses only information available before its testing period.
+## Sensitivity Analysis
+
+The application can test how strategy performance changes when varying:
+
+- Maximum portfolio weight
+- Training-window length
+- Rebalance frequency
+- Transaction costs
+
+This helps identify strategies whose historical results depend too heavily on one specific set of assumptions.
+
+## Risk Analytics
+
+- Historical Value at Risk
+- Conditional Value at Risk / Expected Shortfall
+- Maximum drawdown
+- Drawdown history
+- Rolling volatility
+- Rolling Sharpe ratio
+- Return distributions
+- Best historical trading days
+- Worst historical trading days
+- Individual asset risk analysis
+- Equal-weight portfolio risk analysis
+
+## Engineering
+
+- pytest automated test suite
+- GitHub Actions continuous integration
+- Streamlit web application
+- Streamlit Community Cloud deployment
+- Secure API credential handling
+- Cached market-data requests
+- Modular Python architecture
 
 ---
 
 # Web Application
 
-The project includes an interactive Streamlit dashboard.
+The Streamlit interface exposes the quantitative engine through a browser.
 
 Users can configure:
 
 - Portfolio tickers
-- Benchmark
+- Benchmark ticker
 - Historical start date
 - Historical end date
 - Risk-free rate
-- Number of Monte Carlo simulations
+- Number of Monte Carlo portfolios
 - Maximum asset weight
 - Backtest training window
 - Rebalance frequency
 - Transaction costs
 
-The application includes:
+The application contains dedicated views for:
 
-- Overview
-- Correlation
-- Monte Carlo
-- Optimization
+- Portfolio Overview
+- Correlation Analysis
+- Monte Carlo Simulation
+- Portfolio Optimization
 - Efficient Frontier
-- Backtesting
+- Walk-Forward Backtesting
 - Historical Market Data
+- Sensitivity Analysis
+- Risk Analytics
+- Project Guide
 
 ### [Open the Live Application](https://quant-portfolio-modeling-engine.streamlit.app/)
 
@@ -149,80 +181,80 @@ The application includes:
 
 # Project Philosophy
 
-This project was intentionally built from first principles.
+A major goal of this project was to understand the mathematics behind portfolio modeling rather than treating financial libraries as a black box.
 
-Instead of immediately using high-level financial functions to perform every calculation, important quantitative operations are implemented directly from their mathematical definitions whenever practical.
+Important financial calculations are therefore implemented directly from their mathematical definitions where practical.
 
-The goal is to understand the complete chain:
+The overall pipeline is:
 
 ```text
-Prices
-  ↓
+Market Prices
+     ↓
 Returns
-  ↓
+     ↓
 Expected Return
-  ↓
+     ↓
 Variance / Volatility
-  ↓
+     ↓
 Covariance
-  ↓
+     ↓
 Correlation
-  ↓
+     ↓
 Portfolio Risk
-  ↓
+     ↓
 Diversification
-  ↓
+     ↓
 Sharpe Ratio
-  ↓
+     ↓
 Beta / Regression
-  ↓
+     ↓
 Annualization
-  ↓
+     ↓
 Monte Carlo Simulation
-  ↓
+     ↓
 Portfolio Optimization
-  ↓
+     ↓
 Efficient Frontier
-  ↓
+     ↓
 Walk-Forward Backtesting
+     ↓
+Sensitivity Analysis
+     ↓
+Risk Analytics
 ```
 
-Scientific libraries are still used where appropriate for numerical optimization, market-data handling, visualization, and supporting infrastructure.
+Libraries such as SciPy, pandas, NumPy, Altair, and Streamlit are used where appropriate for numerical optimization, data handling, visualization, and application infrastructure.
 
 ---
 
-# Mathematics
+# Core Mathematics
 
 ## Simple Return
 
-For an asset moving from price $P_{t-1}$ to price $P_t$:
+The return between two consecutive prices is:
 
 ```math
-R_t = \frac{P_t - P_{t-1}}{P_{t-1}}
+R_t
+=
+\frac{P_t-P_{t-1}}{P_{t-1}}
 ```
-
-This measures the percentage change in an asset's price from one period to the next.
 
 ---
 
 ## Arithmetic Mean Return
 
-For returns $R_1, R_2, \ldots, R_n$:
+For `n` observed returns:
 
 ```math
 \bar{R}
 =
 \frac{1}{n}
-\sum_{i=1}^{n} R_i
+\sum_{i=1}^{n}R_i
 ```
-
-The arithmetic mean represents the average return across the observed periods.
 
 ---
 
-## Variance
-
-Population variance:
+## Population Variance
 
 ```math
 \sigma^2
@@ -232,7 +264,7 @@ Population variance:
 (R_i-\bar{R})^2
 ```
 
-Sample variance:
+## Sample Variance
 
 ```math
 s^2
@@ -242,11 +274,9 @@ s^2
 (R_i-\bar{R})^2
 ```
 
-The sample form is useful when historical market observations are treated as a sample used to estimate underlying risk.
-
 ---
 
-## Standard Deviation / Volatility
+## Standard Deviation
 
 ```math
 \sigma
@@ -254,16 +284,16 @@ The sample form is useful when historical market observations are treated as a s
 \sqrt{\sigma^2}
 ```
 
-Standard deviation measures the dispersion of returns and is used as a measure of historical volatility.
+Standard deviation of returns is used as a measure of historical volatility.
 
 ---
 
 # Covariance
 
-For assets A and B:
+Let `C_AB` represent the covariance between assets A and B.
 
 ```math
-\mathrm{Cov}(A,B)
+C_{AB}
 =
 \frac{1}{n}
 \sum_{i=1}^{n}
@@ -271,11 +301,9 @@ For assets A and B:
 (R_{B,i}-\bar{R}_B)
 ```
 
-Covariance measures whether the returns of two assets tend to move together.
+Positive covariance indicates that two assets historically tend to move in the same direction.
 
-Positive covariance indicates that they tend to move in the same direction.
-
-Negative covariance indicates that they tend to move in opposite directions.
+Negative covariance indicates a tendency to move in opposite directions.
 
 ---
 
@@ -284,58 +312,50 @@ Negative covariance indicates that they tend to move in opposite directions.
 Correlation standardizes covariance:
 
 ```math
-\rho_{A,B}
+\rho_{AB}
 =
-\frac{
-\mathrm{Cov}(A,B)
-}{
-\sigma_A \sigma_B
-}
+\frac{C_{AB}}
+{\sigma_A \sigma_B}
 ```
 
-Correlation is bounded by:
+with:
 
 ```math
 -1
 \le
-\rho_{A,B}
+\rho_{AB}
 \le
 1
 ```
 
-Lower correlation between portfolio assets can create diversification benefits.
+Correlation is fundamental to diversification because portfolio risk depends not only on the volatility of individual assets, but also on how those assets move relative to one another.
 
 ---
 
 # Portfolio Mathematics
 
-## Portfolio Expected Return
+## Expected Portfolio Return
 
-For a portfolio containing $n$ assets:
+For a portfolio containing `n` assets:
 
 ```math
 E[R_p]
 =
 \sum_{i=1}^{n}
-w_i E[R_i]
+w_iE[R_i]
 ```
 
 For a fully invested portfolio:
 
 ```math
-\sum_{i=1}^{n} w_i = 1
+\sum_{i=1}^{n}w_i
+=
+1
 ```
-
-where:
-
-- $w_i$ is the weight of asset $i$
-- $E[R_i]$ is the expected return of asset $i$
 
 ---
 
 ## Two-Asset Portfolio Variance
-
-For two assets A and B:
 
 ```math
 \sigma_p^2
@@ -344,7 +364,7 @@ w_A^2\sigma_A^2
 +
 w_B^2\sigma_B^2
 +
-2w_Aw_B\mathrm{Cov}(A,B)
+2w_Aw_BC_{AB}
 ```
 
 Using correlation:
@@ -356,10 +376,10 @@ w_A^2\sigma_A^2
 +
 w_B^2\sigma_B^2
 +
-2w_Aw_B\rho_{A,B}\sigma_A\sigma_B
+2w_Aw_B\rho_{AB}\sigma_A\sigma_B
 ```
 
-The covariance term is the mathematical reason diversification can reduce portfolio risk.
+The covariance term is what allows diversification to reduce portfolio risk.
 
 ---
 
@@ -371,41 +391,27 @@ For multiple assets:
 \sigma_p^2
 =
 \sum_{i=1}^{n}
-w_i^2 \sigma_i^2
+w_i^2\sigma_i^2
 +
 2
 \sum_{i=1}^{n}
 \sum_{j=i+1}^{n}
-w_i w_j C_{ij}
+w_iw_jC_{ij}
 ```
 
-where:
-
-- $w_i$ is the weight of asset $i$
-- $\sigma_i^2$ is the variance of asset $i$
-- $C_{ij}$ is the covariance between assets $i$ and $j$
-
-The compact matrix form is:
+The compact matrix representation is:
 
 ```math
 \sigma_p^2
 =
-w^T \Sigma w
+w^T\Sigma w
 ```
 
-where:
-
-- $w$ is the portfolio weight vector
-- $w^T$ is the transpose of the weight vector
-- $\Sigma$ is the covariance matrix
-
-The project implements the expanded variance and covariance calculation directly.
+The project implements the expanded variance-and-covariance calculation directly.
 
 ---
 
 ## Portfolio Volatility
-
-Portfolio volatility is the square root of portfolio variance:
 
 ```math
 \sigma_p
@@ -422,43 +428,34 @@ The Sharpe ratio measures excess return per unit of volatility.
 ```math
 S
 =
-\frac{
-R_p-R_f
-}{
-\sigma_p
-}
+\frac{R_p-R_f}
+{\sigma_p}
 ```
 
 where:
 
-- $R_p$ = portfolio return
-- $R_f$ = risk-free rate
-- $\sigma_p$ = portfolio volatility
+- `R_p` = portfolio return
+- `R_f` = risk-free rate
+- `sigma_p` = portfolio volatility
 
-Higher Sharpe ratios indicate more historical excess return relative to the amount of volatility taken.
+A higher historical Sharpe ratio indicates more excess return relative to the amount of volatility experienced.
 
 ---
 
 # Beta
 
-Beta measures an asset's historical sensitivity to movements in a market benchmark.
+Let `C_sm` represent covariance between stock returns and market returns.
+
+Beta is:
 
 ```math
 \beta
 =
-\frac{
-\mathrm{Cov}(R_s,R_m)
-}{
-\mathrm{Var}(R_m)
-}
+\frac{C_{sm}}
+{\sigma_m^2}
 ```
 
-where:
-
-- $R_s$ = stock returns
-- $R_m$ = market returns
-
-A beta greater than 1 indicates greater historical sensitivity to market movements.
+A beta above 1 indicates greater historical sensitivity to market movements.
 
 A beta below 1 indicates lower historical sensitivity.
 
@@ -466,7 +463,7 @@ A beta below 1 indicates lower historical sensitivity.
 
 # Simple Linear Regression
 
-The engine implements the model:
+The project implements:
 
 ```math
 Y
@@ -478,28 +475,13 @@ Y
 \epsilon
 ```
 
-For stock returns relative to market returns:
-
-```math
-R_s
-=
-\alpha
-+
-\beta R_m
-+
-\epsilon
-```
-
-The regression slope is:
+The slope is:
 
 ```math
 \beta
 =
-\frac{
-\mathrm{Cov}(X,Y)
-}{
-\mathrm{Var}(X)
-}
+\frac{C_{XY}}
+{\sigma_X^2}
 ```
 
 The intercept is:
@@ -512,41 +494,35 @@ The intercept is:
 \beta\bar{X}
 ```
 
+This is used to analyze an asset's historical relationship with a market benchmark.
+
 ---
 
 # Annualization
 
-The engine assumes approximately 252 trading days per year for daily market data.
+The engine uses approximately 252 trading days per year for daily market data.
 
 ## Arithmetic Annualized Return
 
 ```math
-R_{\mathrm{annual}}
+R_a
 \approx
-252\bar{R}_{\mathrm{daily}}
+252\bar{R}_d
 ```
-
----
 
 ## Annualized Volatility
 
 ```math
-\sigma_{\mathrm{annual}}
+\sigma_a
 =
-\sigma_{\mathrm{daily}}
+\sigma_d
 \sqrt{252}
 ```
 
-Variance scales approximately with time, causing standard deviation to scale with the square root of time.
-
----
-
 ## Cumulative Return
 
-Returns must be compounded through time.
-
 ```math
-R_{\mathrm{cumulative}}
+R_c
 =
 \left[
 \prod_{t=1}^{n}
@@ -555,12 +531,10 @@ R_{\mathrm{cumulative}}
 -1
 ```
 
----
-
 ## Compounded Annualized Return
 
 ```math
-R_{\mathrm{annualized}}
+R_a
 =
 \left(
 \prod_{t=1}^{n}
@@ -571,7 +545,7 @@ R_{\mathrm{annualized}}
 
 ---
 
-# Monte Carlo Portfolio Simulation
+# Monte Carlo Simulation
 
 Monte Carlo simulation explores many possible portfolio allocations.
 
@@ -586,58 +560,50 @@ w_i
 For a fully invested portfolio:
 
 ```math
-\sum_i w_i
+\sum_iw_i
 =
 1
 ```
 
-For every simulated portfolio, the engine calculates expected return:
+For each sampled portfolio, the engine calculates:
 
-```math
-E[R_p]
-```
+- Expected annual return
+- Annualized volatility
+- Sharpe ratio
+- Portfolio weights
 
-volatility:
+The simulation produces a cloud of possible historical risk-return combinations.
 
-```math
-\sigma_p
-```
+Monte Carlo simulation samples the portfolio space.
 
-and Sharpe ratio:
+It does **not** prove that the best sampled portfolio is mathematically optimal.
 
-```math
-S_p
-```
-
-The simulation creates a cloud of possible historical risk-return combinations.
-
-Monte Carlo simulation does not mathematically prove that a portfolio is optimal. It samples the available portfolio space.
-
-The numerical optimization engine separately attempts to solve directly for optimal portfolios.
+The optimization engine separately solves for specific portfolio objectives.
 
 ---
 
 # Portfolio Optimization
 
-The project uses constrained numerical optimization through SciPy while retaining its own implementations of portfolio return, variance, volatility, and Sharpe ratio.
+The optimization engine uses SciPy's SLSQP numerical optimizer while the portfolio statistics themselves are calculated using the project's own functions.
 
 ## Minimum-Volatility Portfolio
 
-The minimum-volatility objective is:
+The objective is:
 
 ```math
-\min_w \sigma_p^2
+\min_w
+\sigma_p^2
 ```
 
 subject to:
 
 ```math
-\sum_i w_i
+\sum_iw_i
 =
 1
 ```
 
-and for a long-only portfolio:
+and:
 
 ```math
 0
@@ -655,35 +621,32 @@ The objective is:
 
 ```math
 \max_w
-\left(
-\frac{
-E[R_p]-R_f
-}{
-\sigma_p
-}
-\right)
+\frac{E[R_p]-R_f}
+{\sigma_p}
 ```
 
-Because numerical optimization software generally minimizes objective functions, the implementation minimizes the negative Sharpe ratio:
+Because numerical optimization software generally minimizes objective functions, the implementation minimizes:
 
 ```math
-\min_w (-S)
+-S
 ```
 
-This is mathematically equivalent to maximizing $S$.
+which is equivalent to maximizing the Sharpe ratio.
 
 ---
 
 # Efficient Frontier
 
-For a series of target returns $R^*$, the engine solves:
+For a series of target returns, the engine solves for the minimum-risk portfolio capable of reaching each target.
+
+The optimization objective is:
 
 ```math
 \min_w
 \sigma_p^2
 ```
 
-subject to:
+subject to a target expected return:
 
 ```math
 E[R_p]
@@ -691,13 +654,13 @@ E[R_p]
 R^*
 ```
 
+and the portfolio constraints:
+
 ```math
-\sum_i w_i
+\sum_iw_i
 =
 1
 ```
-
-and:
 
 ```math
 0
@@ -707,12 +670,12 @@ w_i
 w_{\max}
 ```
 
-The resulting minimum-risk portfolios form the efficient frontier.
+The resulting portfolios form the efficient frontier.
 
-A portfolio below the efficient frontier is inefficient because another available portfolio can provide either:
+A portfolio below the frontier is inefficient because another portfolio can provide either:
 
-- More expected return for the same risk
-- Less risk for the same expected return
+- more expected return for approximately the same risk, or
+- less risk for approximately the same expected return.
 
 ---
 
@@ -720,7 +683,7 @@ A portfolio below the efficient frontier is inefficient because another availabl
 
 A major focus of the project is preventing look-ahead bias.
 
-The backtest follows this process:
+The backtesting process is:
 
 ```text
 Historical Training Window
@@ -729,20 +692,20 @@ Estimate Historical Statistics
           ↓
 Optimize Portfolio
           ↓
-Lock Target Weights
+Lock Portfolio Weights
           ↓
-Future Out-of-Sample Test Period
+Future Out-of-Sample Period
           ↓
 Observe Actual Returns
           ↓
-Allow Portfolio Weights to Drift
+Allow Weights to Drift
           ↓
-Rebalance Using Newly Available Data
+Rebalance
           ↓
 Repeat
 ```
 
-A common configuration is:
+A typical configuration is:
 
 ```text
 Training window:        504 trading days
@@ -751,33 +714,33 @@ Rebalance frequency:     63 trading days
 
 This approximates:
 
-- Two years of trailing historical data
+- Two years of trailing training data
 - Quarterly portfolio rebalancing
 
-At every rebalance date, only information available before that date is used to calculate the portfolio for the next testing period.
+At every rebalance date, only information available before that date is used to determine the portfolio allocation for the next testing period.
 
 ---
 
 # Natural Portfolio Weight Drift
 
-Portfolio weights do not remain artificially constant between rebalances.
+Portfolio weights are not artificially reset every day.
 
-Suppose a portfolio begins with:
+Suppose a portfolio starts as:
 
 ```text
 Asset A: 50%
 Asset B: 50%
 ```
 
-If Asset A rises significantly more than Asset B, Asset A naturally becomes a larger percentage of the portfolio.
+If Asset A subsequently outperforms Asset B, Asset A naturally becomes a larger percentage of the portfolio.
 
-The engine allows this weight drift to occur until the next rebalance.
+The engine allows these weights to drift until the next scheduled rebalance.
 
 ---
 
 # Portfolio Turnover
 
-One-way portfolio turnover is:
+Let `T` represent one-way portfolio turnover.
 
 ```math
 T
@@ -785,13 +748,11 @@ T
 \frac{1}{2}
 \sum_i
 \left|
-w_{i,\mathrm{new}}
+w_{i,new}
 -
-w_{i,\mathrm{old}}
+w_{i,old}
 \right|
 ```
-
-where $T$ represents turnover.
 
 For example, moving from:
 
@@ -807,15 +768,7 @@ Asset A: 100%
 Asset B: 0%
 ```
 
-results in:
-
-```math
-T
-=
-0.50
-```
-
-or 50% turnover.
+creates 50% one-way portfolio turnover.
 
 ---
 
@@ -823,9 +776,9 @@ or 50% turnover.
 
 Let:
 
-- $T$ = portfolio turnover
-- $b$ = transaction cost in basis points
-- $C$ = transaction-cost rate
+- `T` = portfolio turnover
+- `b` = transaction cost in basis points
+- `C` = estimated transaction-cost rate
 
 Then:
 
@@ -833,22 +786,20 @@ Then:
 C
 =
 T
-\left(
 \frac{b}{10000}
-\right)
 ```
 
-This allows the backtest to recognize that portfolio rebalancing is not free.
+This prevents the backtest from assuming that portfolio rebalancing is completely free.
 
-The current transaction-cost model is intentionally simplified and does not attempt to reproduce every component of real-world trade execution.
+The transaction-cost model is intentionally simplified.
 
 ---
 
 # Maximum Position Constraints
 
-The optimizer supports limits on the amount invested in any individual asset.
+The optimizer supports maximum position sizes.
 
-For example, a 40% concentration cap imposes:
+For example, a 40% concentration cap requires:
 
 ```math
 0
@@ -858,32 +809,21 @@ w_i
 0.40
 ```
 
-This makes it possible to compare an unrestricted optimizer against a more diversified portfolio.
-
-For example:
+This allows direct comparison between:
 
 ```text
-Maximum Sharpe
-
-vs.
-
-Maximum Sharpe with 40% Position Cap
+Unrestricted Maximum Sharpe
+          vs.
+Maximum Sharpe with Position Cap
 ```
+
+Concentration limits help show how diversification constraints affect return, volatility, drawdown, and risk-adjusted performance.
 
 ---
 
 # Maximum Drawdown
 
-Let $V_t$ be portfolio value at time $t$.
-
-The running peak is:
-
-```math
-P_t
-=
-\max_{s \le t}
-V_s
-```
+Let `V_t` represent portfolio value and `P_t` represent the highest portfolio value observed up to time `t`.
 
 Drawdown is:
 
@@ -894,15 +834,134 @@ D_t
 -1
 ```
 
-Maximum drawdown is:
+Maximum drawdown is the largest historical peak-to-trough decline.
 
-```math
-D_{\max}
-=
-\min_t D_t
+---
+
+# Sensitivity Analysis
+
+A strong historical result can be misleading if it only works with one exact parameter setting.
+
+The sensitivity-analysis engine changes one assumption at a time while keeping the others constant.
+
+Supported sensitivity variables include:
+
+### Maximum Position Size
+
+Example:
+
+```text
+25%
+40%
+60%
+80%
+100%
 ```
 
-It represents the largest peak-to-trough decline observed during the backtest.
+This tests whether strong performance depends on extreme portfolio concentration.
+
+### Training Window
+
+Example:
+
+```text
+252 days
+378 days
+504 days
+756 days
+```
+
+This tests whether performance depends heavily on one specific historical lookback period.
+
+### Rebalance Frequency
+
+Example:
+
+```text
+21 days
+63 days
+126 days
+252 days
+```
+
+This tests whether the strategy depends heavily on specific trading timing.
+
+### Transaction Costs
+
+Example:
+
+```text
+0 bps
+5 bps
+10 bps
+25 bps
+50 bps
+```
+
+This tests whether realistic trading friction materially changes the result.
+
+A more robust strategy should generally respond gradually to reasonable parameter changes rather than collapsing when a single assumption changes slightly.
+
+---
+
+# Risk Analytics
+
+## Historical Value at Risk
+
+Historical VaR estimates a loss threshold using the empirical return distribution.
+
+For example, a 95% daily VaR of 3% means that approximately 5% of the observed historical daily returns were worse than a 3% loss.
+
+VaR describes a historical threshold.
+
+It does not describe how severe losses can become once that threshold is exceeded.
+
+---
+
+## Conditional Value at Risk
+
+Conditional Value at Risk, also called Expected Shortfall, measures the average loss among observations beyond the VaR threshold.
+
+This provides information about the severity of historical tail losses.
+
+---
+
+## Rolling Volatility
+
+Rolling volatility recalculates annualized volatility across moving historical windows.
+
+This makes it possible to observe how portfolio risk changes across different market regimes.
+
+---
+
+## Rolling Sharpe Ratio
+
+Rolling Sharpe analysis measures how historical risk-adjusted performance changes through time.
+
+A strategy with a strong full-period Sharpe ratio may still experience long periods of weak or negative risk-adjusted performance.
+
+---
+
+## Return Distribution
+
+The application includes a historical return histogram to visualize:
+
+- Typical daily returns
+- Large positive moves
+- Large negative moves
+- Tail behavior
+- Return dispersion
+
+---
+
+## Extreme Trading Days
+
+The risk dashboard identifies:
+
+- 10 worst historical days
+- 10 best historical days
+
+This helps show how much overall performance and risk can be influenced by relatively rare market events.
 
 ---
 
@@ -916,14 +975,14 @@ The backtesting engine can compare:
 - Equal Weight
 - Market benchmark
 
-Strategies are evaluated using:
+Strategies are evaluated with:
 
 | Metric | Purpose |
 |---|---|
-| CAGR | Long-run compounded growth |
+| CAGR | Compounded annual portfolio growth |
 | Volatility | Historical variability of returns |
 | Sharpe Ratio | Excess return per unit of volatility |
-| Maximum Drawdown | Largest peak-to-trough decline |
+| Maximum Drawdown | Largest historical peak-to-trough decline |
 | Turnover | Amount of portfolio reallocation |
 | Transaction Costs | Estimated cost of rebalancing |
 
@@ -957,23 +1016,30 @@ Strategies are evaluated using:
        |                      |                      |
        v                      v                      v
    Statistics           Portfolio Math        Regression / Beta
-       |                      |
-       +-----------+----------+
-                   |
-                   v
-             Monte Carlo
-                   |
-                   v
-             Optimization
-                   |
-                   v
-          Efficient Frontier
-                   |
-                   v
-        Walk-Forward Backtesting
-                   |
-                   v
-       Interactive Streamlit Results
+       |                      |                      |
+       +----------------------+----------------------+
+                              |
+                              v
+                       Monte Carlo
+                              |
+                              v
+                       Optimization
+                              |
+                              v
+                    Efficient Frontier
+                              |
+                              v
+                 Walk-Forward Backtesting
+                              |
+                 +------------+------------+
+                 |                         |
+                 v                         v
+        Sensitivity Analysis        Risk Analytics
+                 |                         |
+                 +------------+------------+
+                              |
+                              v
+                Interactive Streamlit Results
 ```
 
 ---
@@ -982,6 +1048,16 @@ Strategies are evaluated using:
 
 ```text
 quant-portfolio-modeling-engine/
+│
+├── assets/
+│   ├── dashboard.png
+│   ├── efficient-frontier.png
+│   └── backtest.png
+│
+├── pages/
+│   ├── 1_Sensitivity_Analysis.py
+│   ├── 2_Risk_Analytics.py
+│   └── 3_Project_Guide.py
 │
 ├── src/
 │   ├── __init__.py
@@ -995,6 +1071,8 @@ quant-portfolio-modeling-engine/
 │   ├── portfolio.py
 │   ├── regression.py
 │   ├── returns.py
+│   ├── risk.py
+│   ├── sensitivity.py
 │   ├── statistics.py
 │   └── visualization.py
 │
@@ -1007,6 +1085,9 @@ quant-portfolio-modeling-engine/
 ├── .github/
 │   └── workflows/
 │       └── tests.yml
+│
+├── .streamlit/
+│   └── config.toml
 │
 ├── streamlit_app.py
 ├── main.py
@@ -1024,21 +1105,11 @@ quant-portfolio-modeling-engine/
 
 - Python
 
-## Quantitative and Scientific Computing
+## Quantitative Computing
 
 - SciPy
 - NumPy
 - pandas
-
-Important financial calculations are implemented manually where practical.
-
-Scientific libraries are primarily used for:
-
-- Numerical optimization
-- Data handling
-- Infrastructure
-- Visualization
-- Verification
 
 ## Visualization
 
@@ -1050,9 +1121,11 @@ Scientific libraries are primarily used for:
 
 - Alpaca Market Data API
 
-## Testing
+## Testing and Engineering
 
 - pytest
+- Git
+- GitHub
 - GitHub Actions
 
 ## Deployment
@@ -1104,7 +1177,7 @@ ALPACA_SECRET_KEY=your_secret_key
 
 Do not commit this file.
 
-The repository contains `.env.example` as a safe template.
+The repository includes `.env.example` as a safe template.
 
 ## 5. Launch the Application
 
@@ -1112,7 +1185,7 @@ The repository contains `.env.example` as a safe template.
 python -m streamlit run streamlit_app.py
 ```
 
-The local application will normally be available at:
+The application will normally be available at:
 
 ```text
 http://localhost:8501
@@ -1128,9 +1201,9 @@ Run:
 python -m pytest
 ```
 
-Tests cover major parts of the engine including:
+The automated tests cover major components including:
 
-- Returns
+- Return calculations
 - Arithmetic mean
 - Variance
 - Standard deviation
@@ -1144,23 +1217,30 @@ Tests cover major parts of the engine including:
 - Regression
 - Annualization
 - Cumulative returns
+- Monte Carlo weight generation
 - Monte Carlo simulation
-- Random portfolio weight generation
 - Maximum position constraints
-- Portfolio optimization
+- Mathematical optimization
 - Efficient frontier
 - Walk-forward backtesting
 - Maximum drawdown
-- Natural portfolio-weight drift
+- Natural weight drift
 - Portfolio turnover
 - Transaction costs
 - Ticker input validation
+- Sensitivity analysis
+- Historical quantiles
+- Value at Risk
+- Conditional Value at Risk
+- Rolling volatility
+- Rolling Sharpe ratio
+- Equal-weight risk calculations
 
 ---
 
 # Continuous Integration
 
-GitHub Actions automatically runs the project's test suite whenever code is pushed to the `main` branch or included in a pull request.
+GitHub Actions automatically runs the test suite when changes are pushed to the main branch or included in a pull request.
 
 ```text
 Code Push
@@ -1176,7 +1256,7 @@ Run pytest
 Pass / Fail
 ```
 
-This helps prevent new changes from silently breaking previously working functionality.
+This helps prevent new changes from silently breaking previously working quantitative functionality.
 
 ---
 
@@ -1190,15 +1270,17 @@ Local development uses:
 .env
 ```
 
-The deployed Streamlit application stores credentials using Streamlit's secrets system.
+The deployed application stores credentials using Streamlit's secrets system.
 
 Secret-containing files are excluded through `.gitignore`.
+
+The application retrieves market data but does not place trading orders.
 
 ---
 
 # Important Limitations
 
-This project is an educational and research-oriented portfolio modeling engine.
+This project is an educational and research-oriented quantitative-finance application.
 
 Historical results should not be interpreted as predictions of future performance.
 
@@ -1206,89 +1288,80 @@ Important limitations include:
 
 - Historical performance does not guarantee future performance.
 - Expected returns are estimated from historical observations.
-- Historical covariance and correlation may not persist.
+- Historical volatility may not represent future volatility.
+- Historical covariance and correlation relationships may change.
 - Portfolio optimization is highly sensitive to expected-return estimates.
-- Optimizers can create unstable or concentrated portfolios.
-- Asset selection may introduce selection or survivorship bias.
-- Results depend heavily on the selected historical period.
+- Optimizers may produce concentrated portfolios.
+- Asset selection can introduce selection bias.
+- Survivorship bias can affect historical analysis.
+- Backtest performance depends heavily on the selected historical period.
+- Sensitivity testing improves robustness analysis but cannot eliminate model risk.
 - Transaction-cost modeling is simplified.
 - Taxes are not modeled.
-- Bid-ask spreads are not explicitly modeled.
+- Bid-ask spreads are not modeled directly.
 - Market impact is not modeled.
 - Liquidity constraints are not modeled.
 - Historical risk-free rates are not yet dynamically incorporated.
-- Free market-data feeds may differ from consolidated institutional-grade feeds.
-- The current model primarily targets long-only U.S. stocks and ETFs.
-- A successful historical backtest does not prove that a strategy will perform similarly in the future.
+- Historical VaR and CVaR do not guarantee future loss limits.
+- Free market-data feeds may differ from consolidated institutional-grade market data.
+- The current application primarily targets long-only U.S. stocks and ETFs.
+- Strong historical performance does not prove that a strategy will perform similarly in the future.
 
 These limitations are part of the reason the project includes:
 
 - Out-of-sample testing
 - Benchmark comparisons
-- Concentration constraints
+- Position constraints
 - Transaction costs
-- Turnover measurement
+- Portfolio turnover
+- Sensitivity analysis
+- Drawdown analysis
+- Tail-risk analytics
 - Multiple competing portfolio strategies
 
 ---
 
-# Roadmap
+# Future Development
 
-Potential future additions include:
+Potential future extensions include:
 
-- Sensitivity analysis
-- Rolling returns
-- Rolling volatility
-- Rolling Sharpe ratio
-- Drawdown visualizations
 - Historical Treasury risk-free rates
-- Value at Risk (VaR)
-- Conditional Value at Risk (CVaR)
 - Alternative expected-return estimators
 - Additional portfolio constraints
 - Larger asset universes
-- More benchmark comparisons
-- Parameter sensitivity testing
-- Transaction-cost sensitivity analysis
+- Additional benchmarks
 - CAPM analysis
-- Alpha analysis
+- Alpha decomposition
 - R-squared analysis
-- Factor models
-- Fama-French factors
-- Additional risk metrics
+- Multi-factor models
+- Fama-French factor analysis
+- More advanced transaction-cost modeling
+- Liquidity modeling
+- Rebalancing optimization
+- Additional tail-risk models
+- Stress testing
+- Scenario analysis
 
 ---
 
 # Why I Built This
 
-Many quantitative-finance projects can produce sophisticated-looking results while hiding most of the underlying mathematics behind libraries.
+Many quantitative-finance projects can produce sophisticated-looking results while hiding most of the mathematics behind libraries.
 
 I wanted to build the opposite.
 
-The goal was to understand how each stage connects to the next:
+The objective was to understand how the quantitative ideas connect, implement the core calculations directly, and then build increasingly realistic portfolio tools on top of those foundations.
+
+The project evolved from basic return calculations into a complete interactive application covering:
 
 ```text
-Market Prices
+Market Data
      ↓
-Returns
+Statistical Analysis
      ↓
-Expected Return
-     ↓
-Variance / Volatility
-     ↓
-Covariance
-     ↓
-Correlation
-     ↓
-Portfolio Risk
+Portfolio Mathematics
      ↓
 Diversification
-     ↓
-Sharpe Ratio
-     ↓
-Beta / Regression
-     ↓
-Annualization
      ↓
 Monte Carlo Simulation
      ↓
@@ -1297,9 +1370,17 @@ Portfolio Optimization
 Efficient Frontier
      ↓
 Walk-Forward Backtesting
+     ↓
+Transaction Costs
+     ↓
+Sensitivity Testing
+     ↓
+Risk Analytics
+     ↓
+Interactive Web Application
 ```
 
-The result is a project where both the Python implementation and the quantitative reasoning behind it can be explained.
+The result is a project where both the code and the quantitative reasoning behind it can be explained.
 
 ---
 
@@ -1307,9 +1388,7 @@ The result is a project where both the Python implementation and the quantitativ
 
 ## [Open the Quant Portfolio Modeling Engine](https://quant-portfolio-modeling-engine.streamlit.app/)
 
-GitHub Repository:
-
-## [LightFragman2/quant-portfolio-modeling-engine](https://github.com/LightFragman2/quant-portfolio-modeling-engine)
+## [View the GitHub Repository](https://github.com/LightFragman2/quant-portfolio-modeling-engine)
 
 ---
 
