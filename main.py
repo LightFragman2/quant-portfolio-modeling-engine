@@ -14,6 +14,13 @@ from src.portfolio import (
 )
 from src.regression import beta, linear_regression
 
+from src.annualization import (
+    annualized_arithmetic_return,
+    annualized_volatility,
+    cumulative_return,
+    annualized_compounded_return,
+)
+
 
 def main():
     print("=== Quant Portfolio Modeling Engine ===")
@@ -42,6 +49,11 @@ def main():
 
     covariance_ab = covariance(stock_a_returns, stock_b_returns)
     correlation_ab = correlation(stock_a_returns, stock_b_returns)
+
+    annual_return_a = annualized_arithmetic_return(mean_a)
+    annual_volatility_a = annualized_volatility(volatility_a)
+    cumulative_return_a = cumulative_return(stock_a_returns)
+    compounded_annual_return_a = annualized_compounded_return(stock_a_returns)
 
     print("\n--- Asset Statistics ---")
     print(f"Stock A mean return: {mean_a:.4%}")
@@ -101,6 +113,12 @@ def main():
     print(f"Stock A beta: {stock_a_beta:.4f}")
     print(f"Regression alpha: {alpha:.6f}")
     print(f"Regression beta: {regression_beta:.4f}")
+
+    print("\n--- Annualized Statistics ---")
+    print(f"Stock A arithmetic annualized return: {annual_return_a:.4%}")
+    print(f"Stock A annualized volatility: {annual_volatility_a:.4%}")
+    print(f"Stock A cumulative return: {cumulative_return_a:.4%}")
+    print(f"Stock A compounded annualized return: "f"{compounded_annual_return_a:.4%}")
 
 
 if __name__ == "__main__":

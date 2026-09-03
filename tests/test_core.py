@@ -16,6 +16,12 @@ from src.portfolio import (
 )
 from src.regression import beta, linear_regression
 
+from src.annualization import (
+    annualized_arithmetic_return,
+    annualized_volatility,
+    cumulative_return,
+    annualized_compounded_return,
+)
 
 def test_simple_returns():
     prices = [100, 105, 102]
@@ -111,3 +117,45 @@ def test_linear_regression():
 
     assert alpha == pytest.approx(1)
     assert beta_value == pytest.approx(2)
+
+def test_annualized_arithmetic_return():
+    result = annualized_arithmetic_return(
+        average_period_return=0.0006,
+        periods_per_year=252,
+    )
+
+    assert result == pytest.approx(0.1512)
+
+
+def test_annualized_volatility():
+    result = annualized_volatility(
+        period_volatility=0.012,
+        periods_per_year=252,
+    )
+
+    assert result == pytest.approx(
+        0.012 * (252 ** 0.5)
+    )
+
+
+def test_cumulative_return():
+    returns = [0.05, -0.02, 0.04]
+
+    result = cumulative_return(returns)
+
+    assert result == pytest.approx(0.07016)
+
+
+def test_annualized_compounded_return():
+    # 10% growth over six months.
+    # Using monthly periods: 12 periods/year, 6 observed periods.
+    monthly_growth_rate = (1.10 ** (1 / 6)) - 1
+
+    returns = [monthly_growth_rate] * 6
+
+    result = annualized_compounded_return(
+        returns,
+        periods_per_year=12,
+    )
+
+    assert result == pytest.approx(0.21)
