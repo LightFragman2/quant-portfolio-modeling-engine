@@ -370,12 +370,20 @@ For multiple assets:
 ```math
 \sigma_p^2
 =
-\sum_i w_i^2\sigma_i^2
+\sum_{i=1}^{n}
+w_i^2 \sigma_i^2
 +
 2
-\sum_{i<j}
-w_iw_j\mathrm{Cov}(i,j)
+\sum_{i=1}^{n}
+\sum_{j=i+1}^{n}
+w_i w_j C_{ij}
 ```
+
+where:
+
+- $w_i$ is the weight of asset $i$
+- $\sigma_i^2$ is the variance of asset $i$
+- $C_{ij}$ is the covariance between assets $i$ and $j$
 
 The compact matrix form is:
 
