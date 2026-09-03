@@ -51,8 +51,13 @@ from src.optimization import (
     efficient_frontier,
 )
 
+from src.backtesting import (
+    rolling_backtest,
+)
+
 from src.visualization import (
     plot_monte_carlo_portfolios,
+    plot_backtest_results,
 )
 
 
@@ -92,6 +97,45 @@ def print_portfolio(
             f"  {symbol}: "
             f"{weight:.2%}"
         )
+
+
+def print_backtest_metrics(
+    title,
+    metrics,
+):
+    print(
+        f"\n{title}"
+    )
+
+    print(
+        f"Total return: "
+        f"{metrics['total_return']:.2%}"
+    )
+
+    print(
+        f"Annual arithmetic return: "
+        f"{metrics['annual_arithmetic_return']:.2%}"
+    )
+
+    print(
+        f"Annual compounded return: "
+        f"{metrics['annual_compounded_return']:.2%}"
+    )
+
+    print(
+        f"Annual volatility: "
+        f"{metrics['annual_volatility']:.2%}"
+    )
+
+    print(
+        f"Sharpe ratio: "
+        f"{metrics['sharpe_ratio']:.4f}"
+    )
+
+    print(
+        f"Maximum drawdown: "
+        f"{metrics['max_drawdown']:.2%}"
+    )
 
 
 def build_returns(
@@ -374,14 +418,18 @@ def main():
         "JPM",
     ]
 
-    benchmark_symbol = "SPY"
+    benchmark_symbol = (
+        "SPY"
+    )
 
     all_symbols = (
         asset_symbols
         + [benchmark_symbol]
     )
 
-    annual_risk_free_rate = 0.04
+    annual_risk_free_rate = (
+        0.04
+    )
 
     start_date = datetime(
         2021,
@@ -431,12 +479,22 @@ def main():
         )
     )
 
+    return_dates = (
+        dates[1:]
+    )
+
     asset_returns = [
         returns_by_symbol[
             symbol
         ]
         for symbol in asset_symbols
     ]
+
+    benchmark_returns = (
+        returns_by_symbol[
+            benchmark_symbol
+        ]
+    )
 
     print_asset_statistics(
         asset_symbols,
@@ -500,7 +558,9 @@ def main():
         simulate_portfolios(
             asset_returns=asset_returns,
             number_of_portfolios=10000,
-            annual_risk_free_rate=annual_risk_free_rate,
+            annual_risk_free_rate=(
+                annual_risk_free_rate
+            ),
             periods_per_year=252,
             sample=True,
             seed=42,
@@ -544,7 +604,9 @@ def main():
     true_max_sharpe = (
         optimized_maximum_sharpe(
             asset_returns,
-            annual_risk_free_rate=annual_risk_free_rate,
+            annual_risk_free_rate=(
+                annual_risk_free_rate
+            ),
             periods_per_year=252,
             sample=True,
         )
@@ -553,7 +615,9 @@ def main():
     true_min_volatility = (
         optimized_minimum_volatility(
             asset_returns,
-            annual_risk_free_rate=annual_risk_free_rate,
+            annual_risk_free_rate=(
+                annual_risk_free_rate
+            ),
             periods_per_year=252,
             sample=True,
         )
@@ -572,47 +636,19 @@ def main():
     )
 
     print(
-        "\n--- Monte Carlo vs Optimization ---"
-    )
-
-    print(
-        "Maximum Sharpe:"
-    )
-
-    print(
-        f"  Monte Carlo: "
-        f"{monte_carlo_max_sharpe['sharpe_ratio']:.6f}"
-    )
-
-    print(
-        f"  Optimized:   "
-        f"{true_max_sharpe['sharpe_ratio']:.6f}"
-    )
-
-    print(
-        "\nMinimum volatility:"
-    )
-
-    print(
-        f"  Monte Carlo: "
-        f"{monte_carlo_min_volatility['annual_volatility']:.6%}"
-    )
-
-    print(
-        f"  Optimized:   "
-        f"{true_min_volatility['annual_volatility']:.6%}"
-    )
-
-    print(
         "\n--- Efficient Frontier ---"
     )
 
-    frontier = efficient_frontier(
-        asset_returns,
-        annual_risk_free_rate=annual_risk_free_rate,
-        periods_per_year=252,
-        sample=True,
-        number_of_points=60,
+    frontier = (
+        efficient_frontier(
+            asset_returns,
+            annual_risk_free_rate=(
+                annual_risk_free_rate
+            ),
+            periods_per_year=252,
+            sample=True,
+            number_of_points=60,
+        )
     )
 
     print(
@@ -621,28 +657,18 @@ def main():
         f"efficient-frontier portfolios."
     )
 
-    print(
-        f"Frontier begins at "
-        f"{frontier[0]['annual_return']:.2%} "
-        f"return / "
-        f"{frontier[0]['annual_volatility']:.2%} "
-        f"volatility."
-    )
-
-    print(
-        f"Frontier ends at "
-        f"{frontier[-1]['annual_return']:.2%} "
-        f"return / "
-        f"{frontier[-1]['annual_volatility']:.2%} "
-        f"volatility."
-    )
-
-    plot_path = (
+    analysis_plot_path = (
         plot_monte_carlo_portfolios(
             simulation_results,
-            optimized_max_sharpe=true_max_sharpe,
-            optimized_min_volatility=true_min_volatility,
-            efficient_frontier_points=frontier,
+            optimized_max_sharpe=(
+                true_max_sharpe
+            ),
+            optimized_min_volatility=(
+                true_min_volatility
+            ),
+            efficient_frontier_points=(
+                frontier
+            ),
         )
     )
 
@@ -651,7 +677,131 @@ def main():
     )
 
     print(
-        plot_path
+        analysis_plot_path
+    )
+
+    print(
+        "\n======================================="
+    )
+
+    print(
+        "         OUT-OF-SAMPLE BACKTEST"
+    )
+
+    print(
+        "======================================="
+    )
+
+    print(
+        "\nStrategy:"
+    )
+
+    print(
+        "Trailing 2-year maximum-Sharpe optimization"
+    )
+
+    print(
+        "Rebalanced approximately quarterly."
+    )
+
+    print(
+        "Each test period uses only data available "
+        "before that period."
+    )
+
+    backtest_results = (
+        rolling_backtest(
+            asset_returns=(
+                asset_returns
+            ),
+            benchmark_returns=(
+                benchmark_returns
+            ),
+            dates=return_dates,
+            strategy="max_sharpe",
+            train_window=504,
+            rebalance_frequency=63,
+            annual_risk_free_rate=(
+                annual_risk_free_rate
+            ),
+            periods_per_year=252,
+            sample=True,
+        )
+    )
+
+    print(
+        f"\nBacktest start: "
+        f"{backtest_results['dates'][0].date()}"
+    )
+
+    print(
+        f"Backtest end: "
+        f"{backtest_results['dates'][-1].date()}"
+    )
+
+    print(
+        f"Out-of-sample trading days: "
+        f"{len(backtest_results['dates']):,}"
+    )
+
+    print(
+        f"Number of rebalances: "
+        f"{len(backtest_results['rebalances'])}"
+    )
+
+    print_backtest_metrics(
+        "Optimized Portfolio Backtest",
+        backtest_results[
+            "portfolio_metrics"
+        ],
+    )
+
+    print_backtest_metrics(
+        f"{benchmark_symbol} Benchmark",
+        backtest_results[
+            "benchmark_metrics"
+        ],
+    )
+
+    print(
+        "\n--- Rebalance History ---"
+    )
+
+    for rebalance in (
+        backtest_results[
+            "rebalances"
+        ]
+    ):
+        print(
+            f"\n{rebalance['rebalance_date'].date()}"
+        )
+
+        for symbol, weight in zip(
+            asset_symbols,
+            rebalance[
+                "weights"
+            ],
+        ):
+            print(
+                f"  {symbol}: "
+                f"{weight:.2%}"
+            )
+
+    backtest_plot_path = (
+        plot_backtest_results(
+            backtest_results,
+            benchmark_name=(
+                benchmark_symbol
+            ),
+        )
+    )
+
+    print(
+        "\nBacktest plot saved to:"
+    )
+
+    print(
+        backtest_plot_path
     )
 
 

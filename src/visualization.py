@@ -199,3 +199,96 @@ def plot_monte_carlo_portfolios(
     return str(
         output_file
     )
+
+
+def plot_backtest_results(
+    backtest_results,
+    benchmark_name="SPY",
+    output_path="outputs/backtest_results.png",
+):
+    dates = (
+        backtest_results[
+            "dates"
+        ]
+    )
+
+    portfolio_growth = (
+        backtest_results[
+            "portfolio_growth"
+        ]
+    )
+
+    benchmark_growth = (
+        backtest_results[
+            "benchmark_growth"
+        ]
+    )
+
+    if len(dates) == 0:
+        raise ValueError(
+            "Backtest contains no dates."
+        )
+
+    output_file = Path(
+        output_path
+    )
+
+    output_file.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    plt.figure(
+        figsize=(12, 7)
+    )
+
+    plt.plot(
+        dates,
+        portfolio_growth,
+        linewidth=2,
+        label="Optimized Portfolio",
+    )
+
+    plt.plot(
+        dates,
+        benchmark_growth,
+        linewidth=2,
+        label=benchmark_name,
+    )
+
+    plt.axhline(
+        y=1.0,
+        linewidth=1,
+        alpha=0.5,
+    )
+
+    plt.xlabel(
+        "Date"
+    )
+
+    plt.ylabel(
+        "Growth of $1"
+    )
+
+    plt.title(
+        "Out-of-Sample Portfolio Backtest"
+    )
+
+    plt.legend()
+
+    plt.grid(
+        alpha=0.25
+    )
+
+    plt.tight_layout()
+
+    plt.savefig(
+        output_file,
+        dpi=180,
+    )
+
+    plt.close()
+
+    return str(
+        output_file
+    )
